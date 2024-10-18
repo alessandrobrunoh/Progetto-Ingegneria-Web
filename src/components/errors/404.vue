@@ -3,8 +3,9 @@
 </script>
 
 <template>
-  <h1>Test Component</h1>
-  <p>This is a test component.</p>
+  <div>
+    <h1>Error 404</h1>
+  </div>
 </template>
 
 <style scoped>
