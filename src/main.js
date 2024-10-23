@@ -1,27 +1,27 @@
-import {createApp} from 'vue'
-import App from './App.vue'
-import {createRouter, createWebHistory} from 'vue-router'
+import {createApp} from 'vue'; //importo solo la funzione createApp di vue e non tutto vue
+import App from './App.vue';
 
-import Home from '@/components/Home'
-import Contact from "@/components/Contact";
-import About from "@/components/About";
-import ERROR_404 from "@/components/errors/404";
+import {createRouter, createWebHashHistory} from 'vue-router'; //importo le funzioni di "vue-router" che voglio usare per definire le rotte
 
-const db = require('@/utils/database');
+//importo i componenti che voglio usare
+import Home from "@/components/Home.vue";
+import Contact from "@/components/Contact.vue";
+import About from "@/components/About.vue";
+import Fetch from "@/components/api/Fetch.vue";
+import Game from "@/components/Game_State/Game.vue";
 
-const routes = [
-    {path: "/", component: Home},
-    {path: "/contact", component: Contact},
-    {path: "/about", component: About},
-    {path: "/:pathMatch(.*)*", component: ERROR_404}
-];
-
+// creo e imposto il router
 const router = createRouter({
-    history: createWebHistory(),
-    routes
-});
+    history: createWebHashHistory(),
+    routes: [
+        {path: "/", component: Home},
+        {path: "/contact", component: Contact},
+        {path: "/about", component: About},
+        {path: "/fetch", component: Fetch},
+        {path: "/game", component: Game},
+]});
 
+// creo l'applicazione e la monto usando il router
 createApp(App)
     .use(router)
-    .mount('#app')
-
+    .mount('#app');

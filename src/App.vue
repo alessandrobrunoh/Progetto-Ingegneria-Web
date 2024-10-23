@@ -1,7 +1,9 @@
 <template>
-  <router-link to="/">Home</router-link><br>
-  <router-link to="/contact">Contact</router-link><br>
+  <router-link to="/">Home</router-link>
+  <router-link to="/contact">Contact</router-link>
   <router-link to="/about">About</router-link>
+  <router-link to="/fetch">Fetch</router-link>
+  <router-link to="/game">Game</router-link>
   <router-view></router-view>
 </template>
 
