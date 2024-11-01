@@ -1,25 +1,22 @@
 <template>
-  <router-link to="/">Home</router-link><br>
-  <router-link to="/contact">Contact</router-link><br>
-  <router-link to="/about">About</router-link>
-  <router-view></router-view>
+  <main>
+    <router-view></router-view>
+  </main>
 </template>
 
 <script>
 export default {
   name: 'App',
-  components: {
-  },
+  components: {},
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Center vertically */
+  flex-grow: 1; /* Allow main to grow and fill the available space */
 }
 </style>
