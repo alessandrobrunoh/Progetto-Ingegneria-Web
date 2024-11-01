@@ -17,7 +17,7 @@ const createRoom = () => {
 </script>
 
 <template>
-  <section class="menu">
+  <section class="menu-container">
     <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
     <Button @click="createRoom" color="danger">CREATE A ROOM</Button>
     <Button v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</Button>
@@ -27,10 +27,13 @@ const createRoom = () => {
 </template>
 
 <style scoped>
-.menu {
+.menu-container {
   display: flex;
   flex-direction: column;
-  padding: 5vh 10vw;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  padding: 5vh 15vw;
   gap: 20px;
 }
 </style>

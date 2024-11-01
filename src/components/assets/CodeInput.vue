@@ -21,7 +21,7 @@ const joinRoom = () => {
 <template>
   <box>
     <input :placeholder="placeholder" />
-    <i @click="joinRoom" class="fe-check"></i>
+    <i @click="joinRoom" class="fe-corner-down-right"></i>
   </box>
 
 </template>
@@ -32,16 +32,16 @@ i {
   border-radius: 0 15px 15px 0;
   background-color: var(--success-color);
   cursor: pointer;
+
 }
 
 i:active {
   transform: scale(0.95);
 }
-
 input {
+  width: 50vw; /* Set the width to 50% */
   border-radius: 15px 0 0 15px;
   border: 0 solid;
-  width: 100%;
   color: var(--dark-color);
   background-color: var(--white-color);
 }
@@ -56,18 +56,17 @@ input::placeholder {
 }
 
 input,
-i{
+i {
   display: flex;
-  padding: 12px;
-  border: 3px solid var(--success-color);
+  padding: 18px 20px;
+  border: 4px solid var(--success-color);
   box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
 }
 
 box {
   display: flex;
   gap: 1vw;
 }
-
 
 </style>

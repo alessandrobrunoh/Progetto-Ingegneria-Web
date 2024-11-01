@@ -1,21 +1,26 @@
 <script>
 export default {
-  name: "input",
+  name: "Input",
   props: {
+    modelValue: {
+      type: String,
+      required: true
+    },
     type: {
       type: String
     },
     placeholder: {
       type: String
     }
-  }
+  },
+  emits: ['update:modelValue']
 }
 </script>
 
 <template>
   <box>
     <i :class="`fe-${type}`"></i>
-    <input :type="type" :placeholder="placeholder"/>
+    <input :type="type" :placeholder="placeholder" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" />
   </box>
 </template>
 
@@ -38,7 +43,7 @@ box {
   display: flex;
   gap: 10px;
   padding: 15px;
-  border: 3.5px solid var(--success-color);
+  border: 4px solid var(--success-color);
   border-radius: 15px;
   font-size: 1.25rem;
   width: 60vw;

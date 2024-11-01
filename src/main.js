@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import SignIN from "@/components/SignIN.vue";
-import About from "@/components/About.vue";
+import SignUP from "@/components/SignUP.vue";
 import Home from "@/components/Home.vue";
 import Room from "@/components/Create.vue";
 import Profile from "@/components/Profile.vue";
@@ -24,7 +24,7 @@ router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token');
     if (to.matched.some(record => record.meta.requiresAuth) && !token) {
         console.log('Not authenticated, redirecting to login');
-        next({ path: '/login' });
+        next({ path: '/sign-in' });
     } else {
         next();
     }
