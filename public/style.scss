@@ -13,6 +13,7 @@
   --light-color: #F4F4F4;
   --white-color: #FFFFFF;
   --black-color: #000000;
+  --grey-color: #808080;
 }
 
 * {
@@ -25,6 +26,5 @@
 }
 
 body {
-  height: 100%;
   background-color: var(--secondary-color);
 }

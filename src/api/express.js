@@ -9,7 +9,7 @@ const PORT = 8000;
 const secretKey = 'your-secret-key'; // Replace with a strong secret key
 
 app.use(cors({
-    origin: 'http://localhost:8080', // Replace with your client URL
+    origin: 'http://192.168.1.57:8080', // Replace with your client URL
     credentials: true
 }));
 app.use(express.json());

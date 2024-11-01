@@ -13,12 +13,10 @@ export default {
 
 <style>
 main {
-  padding: 0 50px;
   display: flex;
-  height: 90vh;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 50px;
+  justify-content: center; /* Center vertically */
+  flex-grow: 1; /* Allow main to grow and fill the available space */
 }
 </style>

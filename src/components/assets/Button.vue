@@ -21,13 +21,14 @@ button {
   padding: 15px;
   border: 0 solid;
   border-radius: 15px;
-  width: 70vw;
-  font-size: 1.5rem;
+  width: 100%;
+  font-size: 1.8rem;
   color: var(--secondary-color);
   background-color: var(--primary-color);
   cursor: pointer;
   box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
 }
+
 
 button:active {
   transform: scale(0.95);
@@ -52,4 +53,9 @@ button[color="gold"] {
 button[color="silver"] {
   background-color: var(--silver-color);
 }
+
+button[color="grey"] {
+  background-color: var(--grey-color);
+}
+
 </style>
