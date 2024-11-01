@@ -1,27 +1,32 @@
-import {createApp} from 'vue'; //importo solo la funzione createApp di vue e non tutto vue
+import { createApp } from 'vue';
 import App from './App.vue';
-
-import {createRouter, createWebHashHistory} from 'vue-router'; //importo le funzioni di "vue-router" che voglio usare per definire le rotte
-
-//importo i componenti che voglio usare
-import Home from "@/components/Home.vue";
-import Contact from "@/components/Contact.vue";
+import { createRouter, createWebHistory } from 'vue-router';
+import SignIN from "@/components/SignIN.vue";
 import About from "@/components/About.vue";
-import Fetch from "@/components/api/Fetch.vue";
-import Game from "@/components/Game_State/Game.vue";
+import Home from "@/components/Home.vue";
+import axios from "axios";
 
-// creo e imposto il router
+const routes = [
+    { path: '/', component: Home, meta: { requiresAuth: true } },
+    { path: '/login', component: SignIN },
+    { path: '/about', component: About, meta: { requiresAuth: true } },
+];
+
 const router = createRouter({
-    history: createWebHashHistory(),
-    routes: [
-        {path: "/", component: Home},
-        {path: "/contact", component: Contact},
-        {path: "/about", component: About},
-        {path: "/fetch", component: Fetch},
-        {path: "/game", component: Game},
-]});
+    history: createWebHistory(),
+    routes: routes
+});
 
-// creo l'applicazione e la monto usando il router
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');
+    if (to.matched.some(record => record.meta.requiresAuth) && !token) {
+        console.log('Not authenticated, redirecting to login');
+        next({ path: '/login' });
+    } else {
+        next();
+    }
+});
+
 createApp(App)
     .use(router)
     .mount('#app');

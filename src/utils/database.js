@@ -1,16 +1,14 @@
-const mysql = require('mysql2/promise');
-import {db} from "@/config";
+const db = require('mysql2');
 
-export const connect = async () => {
-    const connection = await mysql.createConnection(db);
-    return connection;
-}
+const Connection = db.createConnection(
+    {
+        host: 'localhost',
+        user: 'root',
+        password: '',
+        database: 'briscola',
+    }
+);
 
-export const query = async (connection, sql, values) => {
-    const [rows] = await connection.execute(sql, values);
-    return rows;
-}
-
-export const close = async (connection) => {
-    await connection.end();
+module.exports = {
+    Connection
 }
