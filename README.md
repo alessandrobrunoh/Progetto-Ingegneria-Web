@@ -1,6 +1,8 @@
 # Progetto-Ingegneria-Web
 # TODO List:
 # Fase di Sviluppo
+## Login:
+ * Mettere che se i dati non sono corretti ti compaiono i Box di rosso
 ## Generale:
  * Aggiungere le Notifiche globali
 ## Menu:
@@ -19,6 +21,8 @@
  * Far funzionare la Leaderboard dopo che il game é finito
 ## Proflo:
  * Dare la possibilitá di cambiare il proprio avatar/email/nome/password
+## Leaderboard:
+ * In automatico in base a quale delle due squadre ha più punti metterà il colore e la coroncina.
 ## OPZIONALE:
  * Aggiungere un sistema di Amici
  * Aggiungere un sistema di Chat
