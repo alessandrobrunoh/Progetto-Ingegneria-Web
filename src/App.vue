@@ -1,25 +1,49 @@
 <template>
-  <router-link to="/">Home</router-link><br>
-  <router-link to="/contact">Contact</router-link><br>
-  <router-link to="/about">About</router-link>
-  <router-view></router-view>
+  <section v-if="isAuthenticated" class="profile-container">
+    <router-link to="/profile">
+      <img alt="Avatar Profile" src="../public/img/avatars/Avatar_0.svg"/>
+    </router-link>
+  </section>
+  <main>
+    <router-view></router-view>
+  </main>
 </template>
 
 <script>
 export default {
   name: 'App',
-  components: {
-  },
+  computed: {
+    isAuthenticated() {
+      return !!localStorage.getItem('token');
+    }
+  }
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+<style scoped>
+@import url('../public/style.scss');
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
+
+.profile-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2vh 5vw;
+}
+
+img {
+  width: 50px;
+  height: auto;
+  cursor: pointer;
+}
+
+img:active {
+  transform: scale(0.9);
+}
+
 </style>
