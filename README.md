@@ -13,6 +13,7 @@
  * * OPPURE
  * Quando esci dalla pagina con le gesture deve uscire in automatico dalla room
  * Quando clicchi l'icona Switch ti dà la possibilità di cambiare teams
+ * Quando clicchi Ready ti compare un countdown quando tutti sono pronti ed inizia la partita
 ## Game:
  * Cazzo é da fare tutto
 ## Leaderboard:
@@ -26,6 +27,7 @@
  * Aggiungere un sistema di Amici
  * Aggiungere un sistema di Chat
  * Aggiungere un sistema di Storico Partite
+ * Mettere delle impostazioni disponibili per Host della partita
 # Fase di Testing
 ## Generale:
   * Aggiungere un paio di animazioni di qua e di la
