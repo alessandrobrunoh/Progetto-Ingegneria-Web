@@ -9,7 +9,7 @@ const PORT = 8000;
 const secretKey = 'your-secret-key'; // Replace with a strong secret key
 
 app.use(cors({
-    origin: 'http://192.168.1.85:8080', // Replace with your client URL
+    origin: 'http://192.168.1.57:8080', // Replace with your client URL
     credentials: true
 }));
 app.use(express.json());
@@ -71,8 +71,8 @@ app.get('/api/check-auth', (req, res) => {
     });
 });
 
-app.get('/api/games', (req, res) => {
-    const sql = 'SELECT * FROM games';
+app.get('/api/rooms', (req, res) => {
+    const sql = 'SELECT * FROM rooms';
     db.Connection.query(sql, (err, result) => {
         if (err) {
             res.status(500).send('Errore nella query');
@@ -82,8 +82,8 @@ app.get('/api/games', (req, res) => {
     });
 });
 
-app.get('/api/game/:code', (req, res) => {
-    const sql = 'SELECT * FROM games WHERE code = ?';
+app.get('/api/room/:code', (req, res) => {
+    const sql = 'SELECT * FROM rooms WHERE code = ?';
     db.Connection.query(sql, [req.params.code], (err, result) => {
         if (err) {
             res.status(500).send('Errore nella query');
@@ -93,8 +93,8 @@ app.get('/api/game/:code', (req, res) => {
     });
 });
 
-app.get('/api/game/:code/players', (req, res) => {
-    const sql = 'SELECT * FROM players WHERE game_code = ?';
+app.get('/api/room/:code/players', (req, res) => {
+    const sql = 'SELECT * FROM players WHERE ROOM_code = ?';
     db.Connection.query(sql, [req.params.code], (err, result) => {
         if (err) {
             res.status(500).send('Errore nella query');

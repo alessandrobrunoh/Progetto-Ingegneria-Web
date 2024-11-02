@@ -21,7 +21,7 @@ if (isAuthenticated()) {
 
 const handleSignUp = async () => {
   try {
-    const response = await axios.post('http://192.168.1.85:8000/api/register', {
+    const response = await axios.post('http://192.168.1.57:8000/api/register', {
       username: username.value,
       email: email.value,
       password: password.value,

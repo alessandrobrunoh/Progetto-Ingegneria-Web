@@ -6,6 +6,8 @@ import SignUP from "@/components/SignUP.vue";
 import Home from "@/components/Home.vue";
 import Room from "@/components/Create.vue";
 import Profile from "@/components/Profile.vue";
+import Leaderboard from "@/components/LeaderBoard.vue";
+import Game from "@/components/Game.vue";
 
 const routes = [
     { path: '/', component: Home, meta: { requiresAuth: true } },

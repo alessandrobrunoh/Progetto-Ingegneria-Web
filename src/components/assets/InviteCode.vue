@@ -30,7 +30,6 @@ const shareCode = () => {
 <style scoped>
 h2 {
   color: var(--primary-color);
-  margin-bottom: 1vh;
 }
 
 i {
