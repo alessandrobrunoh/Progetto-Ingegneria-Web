@@ -1,10 +1,14 @@
 const express = require('express');
-const db = require("../utils/database");
+const http = require('http');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const db = require('../utils/database');
+const setupSocket = require('./webSocket');
 
 const app = express();
+const server = http.createServer(app);
+const io = setupSocket(server);
 const PORT = 8000;
 const secretKey = 'your-secret-key'; // Replace with a strong secret key
 
@@ -15,8 +19,8 @@ app.use(cors({
 app.use(express.json());
 
 app.post('/api/login', (req, res) => {
-    const {username, password} = req.body;
-    console.log('Received login request:', {username, password});
+    const { username, password } = req.body;
+    console.log('Received login request:', { username, password });
 
     const sql = 'SELECT * FROM users WHERE username = ?';
     db.Connection.query(sql, [username], async (err, result) => {
@@ -37,14 +41,14 @@ app.post('/api/login', (req, res) => {
             return;
         }
         // Generate a JWT token
-        const token = jwt.sign({id: result[0].id, username: result[0].username}, secretKey, {expiresIn: '1h'});
+        const token = jwt.sign({ id: result[0].id, username: result[0].username }, secretKey, { expiresIn: '1h' });
         console.log('Login successful:', result);
-        res.json({token});
+        res.json({ token });
     });
 });
 
 app.post('/api/register', async (req, res) => {
-    const {username, email, password} = req.body;
+    const { username, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     const sql = 'INSERT INTO users (username, email, password) VALUES (?, ?, ?)';
     db.Connection.query(sql, [username, email, hashedPassword], (err, result) => {
@@ -61,13 +65,13 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/check-auth', (req, res) => {
     const token = req.headers['authorization'];
     if (!token) {
-        return res.json({isAuthenticated: false});
+        return res.json({ isAuthenticated: false });
     }
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) {
-            return res.json({isAuthenticated: false});
+            return res.json({ isAuthenticated: false });
         }
-        res.json({isAuthenticated: true, user: decoded});
+        res.json({ isAuthenticated: true, user: decoded });
     });
 });
 
@@ -94,7 +98,12 @@ app.get('/api/room/:code', (req, res) => {
 });
 
 app.get('/api/room/:code/players', (req, res) => {
-    const sql = 'SELECT * FROM players WHERE ROOM_code = ?';
+    const sql = `
+        SELECT players.*, users.username AS name /* .* per selezionare le colonne che ci interessano */
+        FROM players
+        JOIN users ON players.user_id = users.id
+        WHERE players.ROOM_code = ?
+    `;
     db.Connection.query(sql, [req.params.code], (err, result) => {
         if (err) {
             res.status(500).send('Errore nella query');
@@ -201,7 +210,7 @@ app.post('/api/create-room', async (req, res) => {
                 res.status(500).send('Error creating room');
                 return;
             }
-            const addUserSql = 'INSERT INTO players (ROOM_code, user_id) VALUES (?, ?)';
+            const addUserSql = 'INSERT INTO players (ROOM_code, user_id, team, host) VALUES (?, ?, 1, true)';
             db.Connection.query(addUserSql, [roomCode, userId], (err, result) => {
                 if (err) {
                     console.error('Error adding user to room:', err);
@@ -216,29 +225,69 @@ app.post('/api/create-room', async (req, res) => {
 });
 
 app.post('/api/room/:roomCode/add-player', async (req, res) => {
-  const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(401).send('Unauthorized');
-  }
-
-  jwt.verify(token, secretKey, async (err, decoded) => {
-    if (err) {
-      return res.status(401).send('Unauthorized');
+    const token = req.headers['authorization'];
+    if (!token) {
+        return res.status(401).send('Unauthorized');
     }
 
-    const userId = decoded.id;
-    const roomCode = req.params.roomCode;
+    jwt.verify(token, secretKey, async (err, decoded) => {
+        if (err) {
+            return res.status(401).send('Unauthorized');
+        }
 
-    const addUserSql = 'INSERT INTO players (ROOM_code, user_id) VALUES (?, ?)';
-    db.Connection.query(addUserSql, [roomCode, userId], (err, result) => {
-      if (err) {
-        console.error('Error adding user to room:', err);
-        res.status(500).send('Error adding user to room');
-        return;
-      }
-      console.log('User added to room:', result);
-      res.status(200).send('User added to room');
+        const userId = decoded.id;
+        const roomCode = req.params.roomCode;
+
+        // Query to get the number of players in each team
+        const getTeamsSql = `
+            SELECT
+                SUM(CASE WHEN team = 1 THEN 1 ELSE 0 END) AS team1Count,
+                SUM(CASE WHEN team = 2 THEN 1 ELSE 0 END) AS team2Count
+            FROM players
+            WHERE ROOM_code = ?
+        `;
+        db.Connection.query(getTeamsSql, [roomCode], (err, result) => {
+            if (err) {
+                console.error('Error fetching team counts:', err);
+                res.status(500).send('Error fetching team counts');
+                return;
+            }
+
+            const team1Count = result[0].team1Count || 0;
+            const team2Count = result[0].team2Count || 0;
+            const team = team1Count <= team2Count ? 1 : 2;
+
+            // Insert the new player into the appropriate team
+            const addUserSql = 'INSERT INTO players (ROOM_code, user_id, team) VALUES (?, ?, ?)';
+            db.Connection.query(addUserSql, [roomCode, userId, team], (err, result) => {
+                if (err) {
+                    console.error('Error adding user to room:', err);
+                    res.status(500).send('Error adding user to room');
+                    return;
+                }
+                console.log('User added to room:', result);
+
+                const player = { user_id: userId, name: decoded.username, team }; // Assuming username is in the token
+                io.to(roomCode).emit('playerJoined', player);
+
+                res.status(200).send('User added to room');
+            });
+        });
     });
+});
+
+app.post('/api/room/:roomCode/player/:userId/ready', (req, res) => {
+  const { roomCode, userId } = req.params;
+  const { ready } = req.body;
+
+  const sql = 'UPDATE players SET ready = ? WHERE ROOM_code = ? AND user_id = ?';
+  db.Connection.query(sql, [ready, roomCode, userId], (err, result) => {
+    if (err) {
+      console.error('Error updating ready status:', err);
+      res.status(500).send('Error updating ready status');
+      return;
+    }
+    res.status(200).send('Ready status updated');
   });
 });
 
@@ -246,7 +295,6 @@ app.use((req, res) => {
     res.status(404).send('404 Pagina non trovata');
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log("Server is running on port " + PORT);
 });
-
