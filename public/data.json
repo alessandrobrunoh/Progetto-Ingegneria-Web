@@ -1,0 +1,204 @@
+{
+  "mazzo": [
+    {
+      "seme": "bastoni",
+      "numero": "1",
+      "valore": "11"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "2",
+      "valore": "0"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "3",
+      "valore": "10"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "4",
+      "valore": "0"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "5",
+      "valore": "0"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "6",
+      "valore": "0"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "7",
+      "valore": "0"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "8",
+      "valore": "2"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "9",
+      "valore": "3"
+    },
+    {
+      "seme": "bastoni",
+      "numero": "10",
+      "valore": "4"
+    },
+    {
+      "seme": "coppe",
+      "numero": "1",
+      "valore": "11"
+    },
+    {
+      "seme": "coppe",
+      "numero": "2",
+      "valore": "0"
+    },
+    {
+      "seme": "coppe",
+      "numero": "3",
+      "valore": "10"
+    },
+    {
+      "seme": "coppe",
+      "numero": "4",
+      "valore": "0"
+    },
+    {
+      "seme": "coppe",
+      "numero": "5",
+      "valore": "0"
+    },
+    {
+      "seme": "coppe",
+      "numero": "6",
+      "valore": "0"
+    },
+    {
+      "seme": "coppe",
+      "numero": "7",
+      "valore": "0"
+    },
+    {
+      "seme": "coppe",
+      "numero": "8",
+      "valore": "2"
+    },
+    {
+      "seme": "coppe",
+      "numero": "9",
+      "valore": "3"
+    },
+    {
+      "seme": "coppe",
+      "numero": "10",
+      "valore": "4"
+    },
+    {
+      "seme": "spade",
+      "numero": "1",
+      "valore": "11"
+    },
+    {
+      "seme": "spade",
+      "numero": "2",
+      "valore": "0"
+    },
+    {
+      "seme": "spade",
+      "numero": "3",
+      "valore": "10"
+    },
+    {
+      "seme": "spade",
+      "numero": "4",
+      "valore": "0"
+    },
+    {
+      "seme": "spade",
+      "numero": "5",
+      "valore": "0"
+    },
+    {
+      "seme": "spade",
+      "numero": "6",
+      "valore": "0"
+    },
+    {
+      "seme": "spade",
+      "numero": "7",
+      "valore": "0"
+    },
+    {
+      "seme": "spade",
+      "numero": "8",
+      "valore": "2"
+    },
+    {
+      "seme": "spade",
+      "numero": "9",
+      "valore": "3"
+    },
+    {
+      "seme": "spade",
+      "numero": "10",
+      "valore": "4"
+    },
+    {
+      "seme": "denari",
+      "numero": "1",
+      "valore": "11"
+    },
+    {
+      "seme": "denari",
+      "numero": "2",
+      "valore": "0"
+    },
+    {
+      "seme": "denari",
+      "numero": "3",
+      "valore": "10"
+    },
+    {
+      "seme": "denari",
+      "numero": "4",
+      "valore": "0"
+    },
+    {
+      "seme": "denari",
+      "numero": "5",
+      "valore": "0"
+    },
+    {
+      "seme": "denari",
+      "numero": "6",
+      "valore": "0"
+    },
+    {
+      "seme": "denari",
+      "numero": "7",
+      "valore": "0"
+    },
+    {
+      "seme": "denari",
+      "numero": "8",
+      "valore": "2"
+    },
+    {
+      "seme": "denari",
+      "numero": "9",
+      "valore": "3"
+    },
+    {
+      "seme": "denari",
+      "numero": "10",
+      "valore": "4"
+    }
+  ]
+}
