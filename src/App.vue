@@ -1,7 +1,7 @@
 <template>
   <section v-if="isAuthenticated" class="profile-icon-container">
     <router-link to="/profile">
-      <img alt="Avatar Profile" src="../public/img/avatars/Avatar_0.svg"/>
+      <img alt="Avatar Profile" src="assets/img/avatars/Avatar_0.svg"/>
     </router-link>
   </section>
   <main>
@@ -34,7 +34,7 @@ export default {
 </script>
 
 <style scoped>
-@import url('../public/style.scss');
+@import url('assets/css/style.scss');
 main {
   display: flex;
   flex-direction: column;

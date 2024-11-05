@@ -1,19 +1,19 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { createRouter, createWebHistory } from 'vue-router';
-import SignIN from "@/components/SignIN.vue";
-import SignUP from "@/components/SignUP.vue";
-import Home from "@/components/Home.vue";
-import Room from "@/components/Create.vue";
-import Profile from "@/components/Profile.vue";
-import Leaderboard from "@/components/LeaderBoard.vue";
-import Game from "@/components/Game.vue";
+import SignIN from "@/pages/SignIN.vue";
+import SignUP from "@/pages/SignUP.vue";
+import Home from "@/pages/Home.vue";
+import Room from "@/pages/Room.vue";
+import Profile from "@/pages/Profile.vue";
+import Leaderboard from "@/pages/LeaderBoard.vue";
+import Game from "@/pages/Game.vue";
 
 const routes = [
     { path: '/', component: Home, meta: { requiresAuth: true } },
     { path: '/sign-in', component: SignIN },
     { path: '/sign-up', component: SignUP },
-    { path: '/room/:roomCode', component: Room, meta: { requiresAuth: true } }, // TODO: Da aggiungere /:id per la stanza
+    { path: '/room/:roomCode', component: Room, meta: { requiresAuth: true } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true }},
     { path: '/leaderboard', component: Leaderboard, meta: { requiresAuth: true }},
     { path: '/:pathMatch(.*)*', redirect: '/' },
