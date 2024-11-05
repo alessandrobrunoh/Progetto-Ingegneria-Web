@@ -7,10 +7,10 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 const io = setupSocket(server);
-const PORT = process.env.PORT || 8000;
+const PORT = 8000;
 
 app.use(cors({
-    origin: process.env.ORIGIN_CORS_IP, // Update this to match your client origin
+	origin: ['http://localhost:8080', 'http://151.61.248.114:8080'], // Update this to match your client origin
     credentials: true
 }));
 app.use(express.json());

@@ -25,7 +25,7 @@ export default {
     const joinRoom = async () => {
       try {
         console.log('Joining room with code:', roomCode.value); // Debugging log
-        const response = await axios.get(`http://192.168.1.85:8000/api/room/${roomCode.value}`, {
+	      const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
           headers: {
             'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
           }

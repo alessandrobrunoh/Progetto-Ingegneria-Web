@@ -15,7 +15,7 @@ const switchJoinButton = () => {
 
 const createRoom = async () => {
   try {
-    const response = await axios.post('http://192.168.1.85:8000/api/create-room', {}, {
+    const response = await axios.post(`http://${window.location.hostname}:8000/api/create-room`, {}, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming the token is stored in localStorage
       }

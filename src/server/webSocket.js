@@ -1,16 +1,22 @@
 const socketIo = require('socket.io');
 require('dotenv').config();
+const db = require('./utils/database'); // Assuming you have a database utility
 
 module.exports = (server) => {
     const io = socketIo(server, {
         cors: {
-            origin: process.env.VUE_APP_API_ORIGIN,
+		origin: 'http://192.168.1.214:8000',
             methods: ['GET', 'POST'],
             credentials: true
         }
     });
 
-    // TODO: Aggiungere un sistema di autenticazione per i socket
+    // Function to handle MySQL errors and emit them through the socket
+    const handleMySqlError = (socket, error) => {
+        console.error(`MySQL Error: ${error.message}`);
+        socket.emit('mysqlError', 'A database error occurred');
+    };
+
     io.on('connection', (socket) => {
         console.log('A user connected');
 
@@ -26,7 +32,12 @@ module.exports = (server) => {
 
         socket.on('playerJoined', (roomCode, player) => {
             try {
-                io.to(roomCode).emit('playerJoined', player);
+                // Example MySQL query
+                const sql = 'INSERT INTO players (room_code, player_name) VALUES (?, ?)';
+                db.Connection.query(sql, [roomCode, player.name], (err) => {
+                    if (err) return handleMySqlError(socket, err);
+                    io.to(roomCode).emit('playerJoined', player);
+                });
             } catch (error) {
                 console.error(`Error emitting playerJoined: ${error.message}`);
                 socket.emit('error', 'Error emitting playerJoined');
@@ -37,5 +48,6 @@ module.exports = (server) => {
             console.log('User disconnected');
         });
     });
+
     return io;
 };

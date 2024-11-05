@@ -21,7 +21,7 @@ if (isAuthenticated()) {
 
 const handleSignUp = async () => {
   try {
-    const response = await axios.post('http://${window.location.hostname}:8000/api/register', {
+    const response = await axios.post(`http://${window.location.hostname}:8000/api/register`, {
       username: username.value,
       email: email.value,
       password: password.value,

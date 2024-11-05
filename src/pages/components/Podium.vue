@@ -31,7 +31,7 @@ export default {
   </section>
 </template>
 
-<style  scoped lang="scss">
+<style  scoped>>
 box {
   padding: 15px;
   border: 0 solid;
