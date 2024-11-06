@@ -4,23 +4,29 @@ const http = require('http');
 const cors = require('cors');
 const setupSocket = require('./webSocket.js');
 
-
 const app = express();
 const server = http.createServer(app);
 const io = setupSocket(server);
 const PORT = process.env.PORT;
 
 app.use(cors({
-	origin: process.env.ORIGIN_CORS_IP, // Update this to match your client origin
+    origin: process.env.ORIGIN_CORS_IP, // Update this to match your client origin
     credentials: true
 }));
 app.use(express.json());
 
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api', authRoutes);
-app.use('/api', roomRoutes);
+app.use('/api', profileRoutes);
+app.use('/api', userRoutes);
+app.use('/api', (req, res, next) => {
+    req.io = io;
+    next();
+}, roomRoutes);
 
 app.use((req, res) => {
     res.status(404).send('404 Page not found');

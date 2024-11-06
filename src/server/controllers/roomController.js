@@ -115,6 +115,7 @@ const createRoom = async (req, res) => {
 const addPlayerToRoom = async (req, res) => {
     const userId = req.user.id;
     const roomCode = req.params.roomCode;
+    const io = req.io;
 
     const getTeamsSql = `
         SELECT SUM(IF(team = 1, 1, 0)) AS team1Count,

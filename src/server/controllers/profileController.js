@@ -1,7 +1,5 @@
 const bcrypt = require('bcryptjs');
 const db = require('../utils/database');
-const jwt = require("jsonwebtoken");
-require ('dotenv').config();
 
 const updateUsername = async (req, res) => {
     const { username } = req.body;

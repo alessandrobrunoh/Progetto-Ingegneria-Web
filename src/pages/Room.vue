@@ -2,17 +2,45 @@
 import TEAMBOX from "@/pages/components/TeamBox.vue";
 import INVITECODE from "@/pages/components/InviteCode.vue";
 import BUTTON from "@/pages/components/Button.vue";
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
 import { io } from 'socket.io-client';
+import axios from 'axios';
 
 const route = useRoute();
 const roomCode = ref('');
 const players = ref([]);
-const socket = io('http://${window.location.hostname}:8000'); // Ensure this URL matches your server URL
+const userId = ref(null);
+const socket = io(`http://${window.location.hostname}:8000`); // Adjust the URL as needed
 
-const userId = ref(null); // Assuming you have a way to get the current user's ID
+async function fetchUserId() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+      headers: {
+        'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+      }
+    });
+    userId.value = response.data.id;
+  } catch (error) {
+    console.error('Error fetching user ID:', error);
+  }
+}
+
+async function fetchPlayers() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.roomCode}/players`, {
+      headers: {
+        'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+      }
+    });
+    players.value = response.data.map(player => ({
+      ...player,
+      ready: false // Initialize ready status
+    }));
+  } catch (error) {
+    console.error('Error fetching players:', error);
+  }
+}
 
 async function toggleReady() {
   try {
@@ -32,30 +60,27 @@ async function toggleReady() {
   }
 }
 
+function removePlayer(playerId) {
+  players.value = players.value.filter(player => player.user_id !== playerId);
+}
+
 onMounted(async () => {
-  try {
-    console.log('Fetching room code for:', route.params.roomCode); // Debugging log
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.roomCode}/players`, {
-      headers: {
-        'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
-      }
-    });
-    roomCode.value = route.params.roomCode;
-    players.value = response.data.map(player => ({
-      ...player,
-      ready: false // Initialize ready status
-    }));
-    console.log('Players:', players.value); // Debugging log
+  roomCode.value = route.params.roomCode;
+  await fetchUserId();
+  fetchPlayers();
 
-    socket.emit('joinRoom', roomCode.value);
+  const player = { user_id: userId.value, name: 'PlayerName' }; // Define the player object
+  socket.emit('joinRoom', roomCode.value);
+  socket.emit('playerJoined', roomCode.value, player); // Pass the player object
 
-    socket.on('playerJoined', (player) => {
-      player.ready = false; // Initialize ready status
-      players.value.push(player);
-    });
-  } catch (error) {
-    console.error('Error fetching room code:', error);
-  }
+  socket.on('playerJoined', (player) => {
+    player.ready = false; // Initialize ready status
+    players.value.push(player);
+  });
+});
+
+onUnmounted(() => {
+  socket.disconnect(); // Disconnect the socket when the component is unmounted
 });
 </script>
 

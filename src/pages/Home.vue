@@ -17,7 +17,7 @@ const createRoom = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/create-room`, {}, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming the token is stored in localStorage
+        'Authorization': `${localStorage.getItem('token')}` // Assuming the token is stored in localStorage
       }
     });
     const roomCode = response.data.roomCode;

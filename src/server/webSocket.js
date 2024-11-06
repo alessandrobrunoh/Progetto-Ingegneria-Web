@@ -1,53 +1,46 @@
-const socketIo = require('socket.io');;
-const db = require('./utils/database'); // Assuming you have a database utility
-require('dotenv').config();
+const { Server } = require('socket.io');
 
-module.exports = (server) => {
-    const io = socketIo(server, {
+function initializeWebSocket(server) {
+    const io = new Server(server, {
         cors: {
-		origin: process.env.ORIGIN_CORS_IP,
-            methods: ['GET', 'POST'],
-            credentials: true
+            origin: process.env.ORIGIN_CORS_IP,
+            methods: ['GET', 'POST']
         }
     });
 
-    // Function to handle MySQL errors and emit them through the socket
-    const handleMySqlError = (socket, error) => {
-        console.error(`MySQL Error: ${error.message}`);
-        socket.emit('mysqlError', 'A database error occurred');
-    };
-
     io.on('connection', (socket) => {
-        console.log('A user connected');
+        try {
+            socket.on('joinRoom', (roomCode) => {
+                try {
+                    console.log('User joined room:', roomCode);
+                    socket.join(roomCode);
+                } catch (error) {
+                    console.error('Error joining room:', error);
+                }
+            });
 
-        socket.on('joinRoom', (roomCode) => {
-            try {
-                socket.join(roomCode);
-                console.log(`User joined room: ${roomCode}`);
-            } catch (error) {
-                console.error(`Error joining room: ${error.message}`);
-                socket.emit('error', 'Error joining room');
-            }
-        });
+            socket.on('playerJoined', (roomCode) => {
+                try {
+                    console.log('Player joined room:', roomCode);
+                    socket.to(roomCode).emit('playerJoined'); // Use `to` to broadcast to all clients in the room except the sender
+                } catch (error) {
+                    console.error('Error handling playerJoined event:', error);
+                }
+            });
 
-        socket.on('playerJoined', (roomCode, player) => {
-            try {
-                // Example MySQL query
-                const sql = 'INSERT INTO players (room_code, player_name) VALUES (?, ?)';
-                db.Connection.query(sql, [roomCode, player.name], (err) => {
-                    if (err) return handleMySqlError(socket, err);
-                    io.to(roomCode).emit('playerJoined', player);
-                });
-            } catch (error) {
-                console.error(`Error emitting playerJoined: ${error.message}`);
-                socket.emit('error', 'Error emitting playerJoined');
-            }
-        });
-
-        socket.on('disconnect', () => {
-            console.log('User disconnected');
-        });
+            socket.on('disconnect', () => {
+                try {
+                    console.log('User disconnected');
+                } catch (error) {
+                    console.error('Error handling disconnect event:', error);
+                }
+            });
+        } catch (error) {
+            console.error('Error during socket connection:', error);
+        }
     });
 
     return io;
-};
+}
+
+module.exports = initializeWebSocket;
