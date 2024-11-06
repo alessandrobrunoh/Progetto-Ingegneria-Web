@@ -1,11 +1,11 @@
-const socketIo = require('socket.io');
-require('dotenv').config();
+const socketIo = require('socket.io');;
 const db = require('./utils/database'); // Assuming you have a database utility
+require('dotenv').config();
 
 module.exports = (server) => {
     const io = socketIo(server, {
         cors: {
-		origin: 'http://192.168.1.214:8000',
+		origin: process.env.ORIGIN_CORS_IP,
             methods: ['GET', 'POST'],
             credentials: true
         }

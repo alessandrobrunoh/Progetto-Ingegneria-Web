@@ -1,9 +1,8 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../utils/database');
-require('dotenv').config();
 
-const secretKey = "your_secret_key";
+const secretKey = process.env.SECRET_KEY;
 const tokenExpiry = '10s';
 
 const login = (req, res) => {
