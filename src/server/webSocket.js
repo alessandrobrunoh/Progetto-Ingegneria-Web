@@ -9,37 +9,35 @@ function initializeWebSocket(server) {
     });
 
     io.on('connection', (socket) => {
+      console.log('A user connected');
+    
+      socket.on('joinRoom', (roomCode) => {
         try {
-            socket.on('joinRoom', (roomCode) => {
-                try {
-                    console.log('User joined room:', roomCode);
-                    socket.join(roomCode);
-                } catch (error) {
-                    console.error('Error joining room:', error);
-                }
-            });
-
-            socket.on('playerJoined', (roomCode) => {
-                try {
-                    console.log('Player joined room:', roomCode);
-                    socket.to(roomCode).emit('playerJoined'); // Use `to` to broadcast to all clients in the room except the sender
-                } catch (error) {
-                    console.error('Error handling playerJoined event:', error);
-                }
-            });
-
-            socket.on('disconnect', () => {
-                try {
-                    console.log('User disconnected');
-                } catch (error) {
-                    console.error('Error handling disconnect event:', error);
-                }
-            });
+          socket.join(roomCode);
+          console.log(`User joined room: ${roomCode}`);
         } catch (error) {
-            console.error('Error during socket connection:', error);
+          console.error(`Error joining room: ${error.message}`);
         }
+      });
+    
+      socket.on('leaveRoom', (roomCode, player) => {
+        try {
+          socket.leave(roomCode);
+          console.log(`User left room: ${roomCode}`);
+          io.to(roomCode).emit('playerDisconnected', player);
+        } catch (error) {
+          console.error(`Error leaving room: ${error.message}`);
+        }
+      });
+    
+      socket.on('disconnect', () => {
+        try {
+          console.log('A user disconnected');
+        } catch (error) {
+          console.error(`Error during disconnect: ${error.message}`);
+        }
+      });
     });
-
     return io;
 }
 

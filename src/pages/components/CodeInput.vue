@@ -25,16 +25,16 @@ export default {
     const joinRoom = async () => {
       try {
         console.log('Joining room with code:', roomCode.value); // Debugging log
-	      const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
+        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
           headers: {
-            'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+            'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
           }
         });
         if (response.data.length > 0) {
           // Add user to the players table
-          await axios.post(`http://192.168.1.85:8000/api/room/${roomCode.value}/add-player`, {}, {
+          await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/add-player`, {}, {
             headers: {
-              'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+              'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
             }
           });
           await router.push(`/room/${roomCode.value}`);
@@ -73,8 +73,10 @@ i {
 i:active {
   transform: scale(0.95);
 }
+
 input {
-  width: 50vw; /* Set the width to 50% */
+  width: 50vw;
+  /* Set the width to 50% */
   border-radius: 15px 0 0 15px;
   border: 0 solid;
   color: var(--dark-color);

@@ -17,7 +17,7 @@ async function fetchUserId() {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
       headers: {
-        'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+        'authorization': localStorage.getItem('token')
       }
     });
     userId.value = response.data.id;
@@ -30,12 +30,13 @@ async function fetchPlayers() {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.roomCode}/players`, {
       headers: {
-        'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+        'authorization': localStorage.getItem('token')
       }
     });
     players.value = response.data.map(player => ({
       ...player,
-      ready: false // Initialize ready status
+      team: player.team,
+      ready: player.ready
     }));
   } catch (error) {
     console.error('Error fetching players:', error);
@@ -60,46 +61,82 @@ async function toggleReady() {
   }
 }
 
-function removePlayer(playerId) {
-  players.value = players.value.filter(player => player.user_id !== playerId);
+async function removePlayer(playerId) {
+  try {
+    await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/remove-player`, {
+      playerId: playerId
+    }, {
+      headers: {
+        'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+      }
+    });
+    players.value = players.value.filter(player => player.user_id !== playerId);
+  } catch (error) {
+    console.error('Error removing player:', error);
+  }
 }
 
 onMounted(async () => {
+  console.log('onMounted called');
   roomCode.value = route.params.roomCode;
   await fetchUserId();
-  fetchPlayers();
+  await fetchPlayers();
 
-  const player = { user_id: userId.value, name: 'PlayerName' }; // Define the player object
+  const player = { user_id: userId.value, name: 'PlayerName' };
   socket.emit('joinRoom', roomCode.value);
-  socket.emit('playerJoined', roomCode.value, player); // Pass the player object
+  socket.emit('playerJoined', roomCode.value, player);
 
   socket.on('playerJoined', (player) => {
-    player.ready = false; // Initialize ready status
-    players.value.push(player);
+    if (player && player.user_id) {
+      players.value.push(player);
+    }
+  });
+
+  socket.on('playerDisconnected', async (player) => {
+    if (player && player.user_id) {
+      players.value = players.value.filter(p => p.user_id !== player.user_id);
+      await fetchPlayers(); // Refresh the player list
+      console.log(`Player disconnected: ${player.name}`);
+    }
   });
 });
 
-onUnmounted(() => {
-  socket.disconnect(); // Disconnect the socket when the component is unmounted
+onUnmounted(async () => {
+  console.log('onUnmounted called');
+  await fetchUserId();
+
+  const player = { user_id: userId.value, name: 'PlayerName' };
+
+  if (roomCode.value) {
+    socket.emit('leaveRoom', roomCode.value, player);
+    await removePlayer(userId.value);
+  } else {
+    console.error('Room code is not set');
+  }
+
+  socket.disconnect();
 });
 </script>
 
 <template>
   <section class="room-container">
-    <INVITECODE :placeholder="roomCode"/>
+    <INVITECODE :placeholder="roomCode" />
     <section class="team-list-container">
       <h2>Squadra 1</h2>
       <section class="team-container">
-        <TEAMBOX v-for="(player, index) in players.filter(p => p.team === 1)" :key="index" :color="player.ready ? 'success' : 'danger'" :host="index === 0">{{ player.name }}</TEAMBOX>
+        <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 1)" :key="index"
+          :color="player?.ready ? 'success' : 'danger'" :host="index === 0">{{ player?.name }}</TEAMBOX>
       </section>
       <i class="cm-switch"></i>
       <section class="team-container">
         <h2>Squadra 2</h2>
-        <TEAMBOX v-for="(player, index) in players.filter(p => p.team === 2)" :key="index" :color="player.ready ? 'success' : 'danger'">{{ player.name }}</TEAMBOX>
+        <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 2)" :key="index"
+          :color="player?.ready ? 'success' : 'danger'">{{ player?.name }}</TEAMBOX>
       </section>
     </section>
     <footer>
-      <BUTTON :color="players.find(p => p.user_id === userId)?.ready ? 'success' : 'danger'" @click="toggleReady">READY</BUTTON>
+      <BUTTON :color="players.find(p => p?.user_id === userId.value)?.ready ? 'success' : 'danger'"
+        @click="toggleReady">READY</BUTTON>
     </footer>
   </section>
 </template>

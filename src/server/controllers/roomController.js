@@ -5,7 +5,6 @@ const express = require("express");
 const app = express();
 const server = http.createServer(app);
 const io = setupSocket(server);
-require('dotenv').config();
 
 const getRooms = (req, res) => {
     const sql = 'SELECT * FROM rooms';
@@ -140,6 +139,18 @@ const addPlayerToRoom = async (req, res) => {
     });
 };
 
+const removePlayerToRoom = async (req, res) => {
+    const userId = req.user.id;
+    const roomCode = req.params.roomCode;
+    const io = req.io;
+    const removeUserSql = 'DELETE FROM players WHERE ROOM_code = ? AND user_id = ?';
+    db.Connection.query(removeUserSql, [roomCode, userId], (err, result) => {
+        if (err) return res.status(500).send('Error removing user from room');
+        io.to(roomCode).emit('playerDisconnected', userId);
+        res.status(200).send('User removed from room');
+    });
+}
+
 const updatePlayerReadyStatus = (req, res) => {
     const { roomCode, userId } = req.params;
     const { ready } = req.body;
@@ -161,5 +172,6 @@ module.exports = {
     getAllPlayers,
     createRoom,
     addPlayerToRoom,
+    removePlayerToRoom,
     updatePlayerReadyStatus
 };
