@@ -153,12 +153,20 @@ const removePlayerToRoom = async (req, res) => {
 
 const updatePlayerReadyStatus = (req, res) => {
     const { roomCode, userId } = req.params;
-    const { ready } = req.body;
-
+    const ready = req.body.ready ? 1 : 0;
     const sql = 'UPDATE players SET ready = ? WHERE ROOM_code = ? AND user_id = ?';
     db.Connection.query(sql, [ready, roomCode, userId], (err, result) => {
-        if (err) return res.status(500).send('Error updating ready status');
-        res.status(200).send('Ready status updated');
+        if (err) return res.status(500).send('Error updating player ready status');
+        res.status(200).send('Player ready status updated');
+    });
+};
+
+const getRoomStatus = (req, res) => {
+    const roomCode = req.params.roomCode;
+    const sql = 'SELECT COUNT(*) AS count FROM players WHERE ROOM_code = ? AND ready = 1';
+    db.Connection.query(sql, [roomCode], (err, result) => {
+        if (err) return res.status(500).send('Error fetching room status');
+        res.json(result[0]);
     });
 };
 
@@ -173,5 +181,6 @@ module.exports = {
     createRoom,
     addPlayerToRoom,
     removePlayerToRoom,
-    updatePlayerReadyStatus
+    updatePlayerReadyStatus,
+    getRoomStatus
 };

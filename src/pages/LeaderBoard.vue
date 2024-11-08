@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import PODIUM from "@/pages/components/Podium.vue";
 import BUTTON from "@/pages/components/Button.vue";
 </script>

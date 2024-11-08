@@ -8,6 +8,8 @@ import Room from "@/pages/Room.vue";
 import Profile from "@/pages/Profile.vue";
 import Leaderboard from "@/pages/LeaderBoard.vue";
 import Game from "@/pages/Game.vue";
+import Settings from "@/pages/profileSettings.vue";
+import Rules from "@/pages/Rules.vue";
 
 const routes = [
     { path: '/', component: Home, meta: { requiresAuth: true } },
@@ -17,7 +19,9 @@ const routes = [
     { path: '/profile', component: Profile, meta: { requiresAuth: true }},
     { path: '/leaderboard', component: Leaderboard, meta: { requiresAuth: true }},
     { path: '/:pathMatch(.*)*', redirect: '/' },
-    { path: '/game', component: Game}
+    { path: '/game', component: Game},
+    { path: '/profile/settings', component: Settings, meta: { requiresAuth: true }},
+    { path: '/rules', component: Rules, meta: { requiresAuth: true }}
 ];
 
 const router = createRouter({

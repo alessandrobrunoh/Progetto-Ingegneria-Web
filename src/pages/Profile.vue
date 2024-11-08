@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import STATSBOX from "@/pages/components/statsBox.vue";
 import BUTTON from "@/pages/components/Button.vue";
 import { useRouter } from 'vue-router';
@@ -14,7 +15,7 @@ const logout = () => {
 <template>
   <section class="profile-container">
     <!-- <i class="fe-log-out logout-icon" @click="logout"></i> -->
-    <img src="../assets/img/avatars/Avatar_0.svg" alt="Profile Avatar" />
+    <img src="@/assets/img/avatars/Avatar-0.svg" alt="Profile Avatar" />
     <section class="statistics-container">
       <STATSBOX type="wins">Games Wins</STATSBOX>
       <STATSBOX type="loses">Games Loses</STATSBOX>

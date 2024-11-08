@@ -38,9 +38,20 @@ const updateAvatar = async (req, res) => {
     });
 }
 
+const saveProfile = async (req, res) => {
+    const { username, email, password, avatar } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10); 
+    const sql = 'UPDATE users SET username = ?, email = ?, password = ?, avatar = ? WHERE id = ?';
+    db.Connection.query(sql, [username, email, hashedPassword, avatar, req.user.id], (err, result) => {
+        if (err) return res.status(500).send('Error in query');
+        res.send('Profile updated successfully');
+    });
+}   	
+
 module.exports = {
     updateUsername,
     updatePassword,
     updateEmail,
-    updateAvatar
+    updateAvatar, 
+    saveProfile
 };

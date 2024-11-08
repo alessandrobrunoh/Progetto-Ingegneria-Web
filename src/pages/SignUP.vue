@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import Input from "./components/Input.vue";
 import Button from "@/pages/components/Button.vue";
 import axios from "axios";
@@ -27,14 +28,13 @@ const handleSignUp = async () => {
       password: password.value,
       c_password: c_password.value,
     });
-    router.push('/sign-in'); // Redirect to home page
+    notification.send('Account created successfully', 'success');
+    setTimeout(() => {
+      router.push('/sign-in');
+    }, 4000);
   } catch (error) {
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-    } else {
-      console.error('Error message:', error.message);
+    if (error.response && error.response.data) {
+      notification.send('Invalid username or password', 'danger');
     }
   }
 };

@@ -1,3 +1,7 @@
+<script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
+</script>
+
 <script>
 import { useRouter } from 'vue-router';
 import axios from 'axios';

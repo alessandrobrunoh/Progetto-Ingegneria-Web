@@ -10,6 +10,15 @@ function initializeWebSocket(server) {
 
     io.on('connection', (socket) => {
       console.log('A user connected');
+      socket.join('lobby');
+
+      socket.on('updateTeams', (roomCode) => {
+        io.to(roomCode).emit('updateTeams');
+      });
+
+      socket.on('updateReady', (roomCode) => {
+        io.to(roomCode).emit('updateReady');
+      });
     
       socket.on('joinRoom', (roomCode) => {
         try {

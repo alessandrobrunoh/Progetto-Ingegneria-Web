@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import { useRouter } from 'vue-router';
 import { toRefs } from 'vue';
 

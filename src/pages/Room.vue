@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import TEAMBOX from "@/pages/components/TeamBox.vue";
 import INVITECODE from "@/pages/components/InviteCode.vue";
 import BUTTON from "@/pages/components/Button.vue";
@@ -7,10 +8,11 @@ import { useRoute } from 'vue-router';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 
-const route = useRoute();
+const router = useRoute();
 const roomCode = ref('');
 const players = ref([]);
 const userId = ref(null);
+const ready = ref(false);
 const socket = io(`http://${window.location.hostname}:8000`); // Adjust the URL as needed
 
 async function fetchUserId() {
@@ -22,13 +24,24 @@ async function fetchUserId() {
     });
     userId.value = response.data.id;
   } catch (error) {
-    console.error('Error fetching user ID:', error);
+    if (error.response && error.response.status === 401) {
+      if (error.response.data === 'Token expired') {
+        alert('Session expired. Please log in again.');
+        // Reindirizza l'utente alla pagina di login
+        router.push('/sign-in');
+      } else {
+        alert('Access denied. Please log in.');
+        router.push('/sign-in');
+      }
+    } else {
+      console.error('Error fetching user data:', error);
+    }
   }
 }
 
 async function fetchPlayers() {
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.roomCode}/players`, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${router.params.roomCode}/players`, {
       headers: {
         'authorization': localStorage.getItem('token')
       }
@@ -45,17 +58,19 @@ async function fetchPlayers() {
 
 async function toggleReady() {
   try {
-    const player = players.value.find(p => p.user_id === userId.value);
-    if (player) {
-      player.ready = !player.ready;
-      await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/player/${userId.value}/ready`, {
-        ready: player.ready
-      }, {
-        headers: {
-          'Authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
-        }
-      });
+    const player = userId.value;
+    if (!player) {
+      // redirect to the home page
+      //window.location.href = '/';
     }
+    await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/player/${userId.value}/ready`, {
+      ready: !player.ready
+    }, {
+      headers: {
+        'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+      }
+    });
+    socket.emit('updateReadyStatus', { userId: userId.value, ready: !player.ready });
   } catch (error) {
     console.error('Error updating ready status:', error);
   }
@@ -77,8 +92,7 @@ async function removePlayer(playerId) {
 }
 
 onMounted(async () => {
-  console.log('onMounted called');
-  roomCode.value = route.params.roomCode;
+  roomCode.value = router.params.roomCode;
   await fetchUserId();
   await fetchPlayers();
 
@@ -99,10 +113,15 @@ onMounted(async () => {
       console.log(`Player disconnected: ${player.name}`);
     }
   });
+  socket.on('updateReadyStatus', ({ userId, ready }) => {
+    const player = players.value.find(p => p.user_id === userId);
+    if (player) {
+      player.ready = ready;
+    }
+  });
 });
 
 onUnmounted(async () => {
-  console.log('onUnmounted called');
   await fetchUserId();
 
   const player = { user_id: userId.value, name: 'PlayerName' };

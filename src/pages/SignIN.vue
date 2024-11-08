@@ -1,9 +1,10 @@
 <script setup>
-import INPUT from "./components/Input.vue";
+import INPUT from "@/pages/components/Input.vue";
 import BUTTON from "@/pages/components/Button.vue";
 import axios from "axios";
-import {ref} from "vue";
-import {useRouter} from 'vue-router';
+import { ref } from "vue";
+import { useRouter } from 'vue-router';
+import { notification } from "@/assets/js/notificationEvent.js";
 
 const username = ref('');
 const password = ref('');
@@ -25,17 +26,16 @@ const handleSignIn = async () => {
     });
     if (response.data.token) {
       localStorage.setItem('token', response.data.token); // Store token
-      await router.push('/'); // Redirect to home page
+      notification.send('Logged in successfully', 'success');
+      setTimeout(() => {
+        router.push('/');
+      }, 4000);
     } else {
       console.error('No token received');
     }
   } catch (error) {
-    if (error.response) {
-      console.error('Error response:', error.response.data);
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-    } else {
-      console.error('Error message:', error.message);
+    if (error.response && error.response.data) {
+      notification.send('Invalid username or password', 'danger');
     }
   }
 };
@@ -43,10 +43,10 @@ const handleSignIn = async () => {
 
 <template>
   <section class="auth-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
+    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo" />
     <section class="input-container">
-      <INPUT v-model="username" placeholder="Username" type="username"/>
-      <INPUT v-model="password" placeholder="Password" type="password"/>
+      <INPUT v-model="username" placeholder="Username" type="username" />
+      <INPUT v-model="password" placeholder="Password" type="password" />
     </section>
     <BUTTON @click="handleSignIn">SIGN IN</BUTTON>
     <p>

@@ -1,3 +1,7 @@
+<script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
+</script>
+
 <script>
 export default {
   name: "podium",
@@ -31,7 +35,7 @@ export default {
   </section>
 </template>
 
-<style  scoped>>
+<style scoped>
 box {
   padding: 15px;
   border: 0 solid;

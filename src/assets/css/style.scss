@@ -16,6 +16,11 @@
   --black-color: #000000;
   --grey-color: #808080;
 
+
+  --dark-danger-color: #701f21;
+
+  --light-danger-color: #db4f51;
+
   --box-shadow: 0 4px 4px rgb(0 0 0 / 20%);
 }
 
@@ -30,6 +35,15 @@
 
 body {
   background-color: var(--secondary-color);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em 2em;
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
 }
 
 footer {

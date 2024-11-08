@@ -1,3 +1,7 @@
+<script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
+</script>
+
 <script>
 export default {
   name: "card",

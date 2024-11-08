@@ -1,4 +1,5 @@
 <script setup>
+import { notification } from "@/assets/js/notificationEvent.js";
 import { ref } from 'vue';
 import Button from "@/pages/components/Button.vue";
 import CodeInput from "@/pages/components/CodeInput.vue";
@@ -26,6 +27,10 @@ const createRoom = async () => {
     console.error('Error creating room:', error);
   }
 };
+
+const rules = () => {
+  router.push('/rules');
+};
 </script>
 
 <template>
@@ -36,7 +41,7 @@ const createRoom = async () => {
     <div v-else>
       <CodeInput v-model="roomCode" placeholder="Insert code"/>
     </div>
-    <Button>RULES</Button>
+    <Button @click="rules">RULES</Button>
   </section>
 </template>
 

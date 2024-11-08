@@ -6,7 +6,12 @@ const authenticateToken = (req, res, next) => {
     if (!token) return res.status(401).send('Access denied. No token provided.');
 
     jwt.verify(token, secretKey, (err, user) => {
-        if (err) return res.status(403).send('Invalid token');
+        if (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).send('Token expired');
+            }
+            return res.status(403).send('Invalid token');
+        }
         req.user = user;
         next();
     });
