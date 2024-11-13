@@ -16,7 +16,7 @@ const getRooms = (req, res) => {
 
 const getRoom = (req, res) => {
     const sql = 'SELECT * FROM rooms WHERE code = ?';
-    db.Connection.query(sql, [req.params.code], (err, result) => {
+    db.Connection.query(sql, [req.params.roomCode], (err, result) => {
         if (err) return res.status(500).send('Error in query');
         res.json(result);
     });
@@ -29,7 +29,7 @@ const getRoomPlayers = (req, res) => {
         JOIN users ON players.user_id = users.id
         WHERE players.ROOM_code = ?
     `;
-    db.Connection.query(sql, [req.params.code], (err, result) => {
+    db.Connection.query(sql, [req.params.roomCode], (err, result) => {
         if (err) return res.status(500).send('Error in query');
         res.json(result);
     });
@@ -37,7 +37,7 @@ const getRoomPlayers = (req, res) => {
 
 const getRoomTableCards = (req, res) => {
     const sql = 'SELECT * FROM table_cards WHERE PLAYERS_GAMES_code = ?';
-    db.Connection.query(sql, [req.params.code], (err, result) => {
+    db.Connection.query(sql, [req.params.roomCode], (err, result) => {
         if (err) return res.status(500).send('Error in query');
         res.json(result);
     });
@@ -45,7 +45,7 @@ const getRoomTableCards = (req, res) => {
 
 const getPlayerHandCards = (req, res) => {
     const sql = 'SELECT number_card_1, seed_card_1, number_card_2, seed_card_2, number_card_3, seed_card_3 FROM hand_cards WHERE PLAYER_GAME_code = ? AND PLAYER_USER_id = ?';
-    db.Connection.query(sql, [req.params.code, req.params.user_id], (err, result) => {
+    db.Connection.query(sql, [req.params.roomCode, req.params.user_id], (err, result) => {
         if (err) return res.status(500).send('Error in query');
         res.json(result);
     });
@@ -110,6 +110,26 @@ const createRoom = async (req, res) => {
         });
     });
 };
+
+const deleteRoom = async (req, res) => {
+    const roomCode = req.params.roomCode;
+    const deleteRoomSql = 'DELETE FROM rooms WHERE code = ?';
+    db.Connection.query(deleteRoomSql, [roomCode], (err, result) => {
+        if (err) return res.status(500).send('Error deleting room');
+        res.status(200).send('Room deleted');
+    });
+}
+
+const startGame = async (req, res) => {
+    const roomCode = req.params.roomCode;
+    const io = req.io;
+    const sql = 'UPDATE rooms SET game_started = 1 WHERE code = ?';
+    db.Connection.query(sql, [roomCode], (err, result) => {
+        if (err) return res.status(500).send('Error starting game');
+        io.to(roomCode).emit('gameStarted');
+        res.status(200).send('Game started');
+    });
+}
 
 const addPlayerToRoom = async (req, res) => {
     const userId = req.user.id;
@@ -179,8 +199,10 @@ module.exports = {
     getAllTableCards,
     getAllPlayers,
     createRoom,
+    deleteRoom,
     addPlayerToRoom,
     removePlayerToRoom,
     updatePlayerReadyStatus,
-    getRoomStatus
+    getRoomStatus,
+    startGame
 };

@@ -21,9 +21,9 @@ const profileRoutes = require('./routes/profileRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 app.use('/api', authRoutes);
-app.use('/api', profileRoutes);
-app.use('/api', userRoutes);
-app.use('/api', (req, res, next) => {
+app.use('/api/profile', profileRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/room', (req, res, next) => {
     req.io = io;
     next();
 }, roomRoutes);

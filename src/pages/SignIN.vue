@@ -4,7 +4,7 @@ import BUTTON from "@/pages/components/Button.vue";
 import axios from "axios";
 import { ref } from "vue";
 import { useRouter } from 'vue-router';
-import { notification } from "@/assets/js/notificationEvent.js";
+import { notification } from "../assets/js/notificationEvent.js";
 
 const username = ref('');
 const password = ref('');
@@ -27,9 +27,7 @@ const handleSignIn = async () => {
     if (response.data.token) {
       localStorage.setItem('token', response.data.token); // Store token
       notification.send('Logged in successfully', 'success');
-      setTimeout(() => {
-        router.push('/');
-      }, 4000);
+      router.push('/');
     } else {
       console.error('No token received');
     }

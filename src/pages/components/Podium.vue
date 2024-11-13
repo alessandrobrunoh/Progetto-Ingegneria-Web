@@ -28,15 +28,15 @@ export default {
   <section class="podium-container">
     <i v-if="winner" class="cm-crown"></i>
     <h2>{{ team }}</h2>
-    <box :winner="winner" :style="{ height: boxHeight }">
+    <div class="box" :winner="winner" :style="{ height: boxHeight }">
       <h2>{{ points }}</h2>
       <p>points</p>
-    </box>
+    </div>
   </section>
 </template>
 
 <style scoped>
-box {
+.box {
   padding: 15px;
   border: 0 solid;
   border-radius: 15px 15px 0 0;
@@ -54,12 +54,12 @@ p {
   font-size: 1.2rem;
 }
 
-box[winner="true"] {
+.box[winner="true"] {
   background-color: var(--gold-color);
   padding: 2vh 10vw;
 }
 
-box[winner="false"] {
+.box[winner="false"] {
   background-color: var(--silver-color);
   padding: 2vh 10vw;
 }

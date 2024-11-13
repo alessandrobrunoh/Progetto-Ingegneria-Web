@@ -9,22 +9,26 @@ const {
     getAllTableCards,
     getAllPlayers,
     createRoom,
+    deleteRoom,
     addPlayerToRoom,
     removePlayerToRoom,
-    updatePlayerReadyStatus
+    updatePlayerReadyStatus,
+    startGame
 } = require('../controllers/roomController');
 const authenticateToken = require('../utils/authenticateToken');
 
-router.get('/rooms', authenticateToken, getRooms);
-router.get('/room/:code', authenticateToken, getRoom);
-router.get('/room/:code/players', authenticateToken, getRoomPlayers);
-router.get('/room/:code/table_cards', authenticateToken, getRoomTableCards);
-router.get('/room/:code/player/:user_id/hand_cards', authenticateToken, getPlayerHandCards);
-router.get('/rooms/table_cards', authenticateToken, getAllTableCards);
-router.get('/rooms/players', authenticateToken, getAllPlayers);
-router.post('/room/create', authenticateToken, createRoom);
-router.post('/room/:roomCode/add-player', authenticateToken, addPlayerToRoom);
-router.post('/room/:roomCode/remove-player', authenticateToken, removePlayerToRoom);
-router.post('/room/:roomCode/player/:userId/ready', authenticateToken, updatePlayerReadyStatus);
+router.get('/', authenticateToken, getRooms);
+router.get('/:roomCode', authenticateToken, getRoom);
+router.get('/:roomCode/players', authenticateToken, getRoomPlayers);
+router.get('/:roomCode/table_cards', authenticateToken, getRoomTableCards);
+router.get('/:roomCode/player/:user_id/hand_cards', authenticateToken, getPlayerHandCards);
+router.get('/table_cards', authenticateToken, getAllTableCards);
+router.get('/players', authenticateToken, getAllPlayers);
+router.post('/create', authenticateToken, createRoom);
+router.delete('/:roomCode/delete', authenticateToken, deleteRoom);
+router.post('/:roomCode/add-player', authenticateToken, addPlayerToRoom);
+router.post('/:roomCode/remove-player', authenticateToken, removePlayerToRoom);
+router.post('/:roomCode/player/:userId/ready', authenticateToken, updatePlayerReadyStatus);
+router.post('/:roomCode/start-game', authenticateToken, startGame);
 
 module.exports = router;

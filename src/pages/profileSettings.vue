@@ -14,7 +14,7 @@ const router = useRouter();
 
 async function fetchUserData() {
     try {
-        const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+        const response = await axios.get(`http://${window.location.hostname}:8000/api/user/`, {
             headers: {
                 'authorization': localStorage.getItem('token')
             }

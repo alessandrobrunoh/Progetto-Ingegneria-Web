@@ -1,19 +1,20 @@
 <script setup>
-import { notification } from "@/assets/js/notificationEvent.js";
-import TEAMBOX from "@/pages/components/TeamBox.vue";
-import INVITECODE from "@/pages/components/InviteCode.vue";
-import BUTTON from "@/pages/components/Button.vue";
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { io } from 'socket.io-client';
 import axios from 'axios';
+import INVITECODE from './components/InviteCode.vue';
+import TEAMBOX from './components/TeamBox.vue';
+import BUTTON from './components/Button.vue';
+import { notification } from '../assets/js/notificationEvent';
 
-const router = useRoute();
+const route = useRoute();
 const roomCode = ref('');
 const players = ref([]);
 const userId = ref(null);
-const ready = ref(false);
-const socket = io(`http://${window.location.hostname}:8000`); // Adjust the URL as needed
+const isHost = ref(false);
+const socket = io(`http://${window.location.hostname}:8000`); 
+const isGameStarted = ref(false);
 
 async function fetchUserId() {
   try {
@@ -24,77 +25,94 @@ async function fetchUserId() {
     });
     userId.value = response.data.id;
   } catch (error) {
-    if (error.response && error.response.status === 401) {
-      if (error.response.data === 'Token expired') {
-        alert('Session expired. Please log in again.');
-        // Reindirizza l'utente alla pagina di login
-        router.push('/sign-in');
-      } else {
-        alert('Access denied. Please log in.');
-        router.push('/sign-in');
-      }
-    } else {
-      console.error('Error fetching user data:', error);
-    }
+    console.error('Error fetching user ID:', error);
   }
 }
 
 async function fetchPlayers() {
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${router.params.roomCode}/players`, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/players`, {
       headers: {
         'authorization': localStorage.getItem('token')
       }
     });
-    players.value = response.data.map(player => ({
-      ...player,
-      team: player.team,
-      ready: player.ready
-    }));
+    players.value = response.data;
+    const currentPlayer = players.value.find(p => p.USER_id === userId.value);
+    if (currentPlayer) {
+      isHost.value = currentPlayer.host;
+    }
   } catch (error) {
     console.error('Error fetching players:', error);
-  }
-}
-
-async function toggleReady() {
-  try {
-    const player = userId.value;
-    if (!player) {
-      // redirect to the home page
-      //window.location.href = '/';
-    }
-    await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/player/${userId.value}/ready`, {
-      ready: !player.ready
-    }, {
-      headers: {
-        'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
-      }
-    });
-    socket.emit('updateReadyStatus', { userId: userId.value, ready: !player.ready });
-  } catch (error) {
-    console.error('Error updating ready status:', error);
   }
 }
 
 async function removePlayer(playerId) {
   try {
     await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/remove-player`, {
-      playerId: playerId
+      playerId
     }, {
       headers: {
-        'authorization': localStorage.getItem('token') // Assuming the token is stored in localStorage
+        'authorization': localStorage.getItem('token')
       }
     });
-    players.value = players.value.filter(player => player.user_id !== playerId);
+    players.value = players.value.filter(p => p.USER_id !== playerId);
+    if (players.value.length === 0) {
+      await deleteRoom();
+    }
   } catch (error) {
     console.error('Error removing player:', error);
   }
 }
 
+async function deleteRoom() {
+  try {
+    await axios.delete(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/delete`, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    console.log('This Room has been deleted');
+  } catch (error) {
+    console.error('Error deleting room:', error);
+  }
+}
+
+async function startGame() {
+  try {
+    await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/start-game`, {
+      roomCode: roomCode.value
+    }, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    notification.send('Game started successfully', 'success',);
+    // send to /game
+    window.location.href = `/game/${roomCode.value}`;
+  } catch (error) {
+    console.error('Error starting game:', error);
+  }
+}
+
+
+async function checkGameStarted() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    isGameStarted.value = response.data.gameStarted;
+  } catch (error) {
+    console.error('Error checking game status:', error);
+  }
+}
+
 onMounted(async () => {
-  roomCode.value = router.params.roomCode;
+  roomCode.value = route.params.roomCode;
   await fetchUserId();
   await fetchPlayers();
+  await checkGameStarted();
 
   const player = { user_id: userId.value, name: 'PlayerName' };
   socket.emit('joinRoom', roomCode.value);
@@ -110,25 +128,22 @@ onMounted(async () => {
     if (player && player.user_id) {
       players.value = players.value.filter(p => p.user_id !== player.user_id);
       await fetchPlayers(); // Refresh the player list
-      console.log(`Player disconnected: ${player.name}`);
-    }
-  });
-  socket.on('updateReadyStatus', ({ userId, ready }) => {
-    const player = players.value.find(p => p.user_id === userId);
-    if (player) {
-      player.ready = ready;
+      if (players.value.length === 0) {
+        await deleteRoom();
+      }
     }
   });
 });
 
 onUnmounted(async () => {
-  await fetchUserId();
-
-  const player = { user_id: userId.value, name: 'PlayerName' };
+  const player = { user_id: userId.value };
 
   if (roomCode.value) {
     socket.emit('leaveRoom', roomCode.value, player);
-    await removePlayer(userId.value);
+    await checkGameStarted();
+    if (!isGameStarted.value) {
+      await removePlayer(userId.value);
+    }
   } else {
     console.error('Room code is not set');
   }
@@ -141,21 +156,25 @@ onUnmounted(async () => {
   <section class="room-container">
     <INVITECODE :placeholder="roomCode" />
     <section class="team-list-container">
-      <h2>Squadra 1</h2>
-      <section class="team-container">
-        <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 1)" :key="index"
-          :color="player?.ready ? 'success' : 'danger'" :host="index === 0">{{ player?.name }}</TEAMBOX>
+      <section v-if="players.filter(p => p?.team === 1).length > 0">
+        <h2>Squadra 1</h2>
+        <section class="team-container">
+          <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 1)" :key="index" color="success"
+            :host="index === 0">{{ player?.name }}</TEAMBOX>
+        </section>
       </section>
       <i class="cm-switch"></i>
-      <section class="team-container">
+      <section v-if="players.filter(p => p?.team === 2).length > 0">
         <h2>Squadra 2</h2>
-        <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 2)" :key="index"
-          :color="player?.ready ? 'success' : 'danger'">{{ player?.name }}</TEAMBOX>
+        <section class="team-container">
+          <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 2)" :key="index" color="success">
+            {{ player?.name }}</TEAMBOX>
+        </section>
       </section>
     </section>
     <footer>
-      <BUTTON :color="players.find(p => p?.user_id === userId.value)?.ready ? 'success' : 'danger'"
-        @click="toggleReady">READY</BUTTON>
+      <BUTTON v-if="isHost" @click="startGame" color="danger">START GAME</BUTTON>
+      <!-- //TODO: Implement the startGame method -->
     </footer>
   </section>
 </template>
@@ -170,7 +189,7 @@ h2 {
   display: flex;
   width: 80vw;
   flex-direction: column;
-  height: 68vh;
+  height: 60vh;
   justify-content: space-between;
 }
 

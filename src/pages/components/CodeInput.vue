@@ -1,8 +1,5 @@
-<script setup>
-import { notification } from "@/assets/js/notificationEvent.js";
-</script>
-
 <script>
+import { notification } from "@/assets/js/notificationEvent.js";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { ref, watch } from 'vue';
@@ -44,10 +41,11 @@ export default {
           await router.push(`/room/${roomCode.value}`);
         } else {
           console.error('Room does not exist');
-          alert('Room does not exist');
-        }
+          notification.send("Error joining room", "danger");
+        } 
       } catch (error) {
         console.error('Error joining room:', error);
+        notification.send("Error joining room", "danger");
       }
     };
 
@@ -60,10 +58,10 @@ export default {
 </script>
 
 <template>
-  <box>
+  <div class="box">
     <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" :placeholder="placeholder" />
     <i @click="joinRoom" class="fe-corner-down-right"></i>
-  </box>
+  </div>
 </template>
 
 <style scoped>
@@ -105,7 +103,7 @@ i {
   font-size: 1.25rem;
 }
 
-box {
+.box {
   display: flex;
   gap: 1vw;
 }

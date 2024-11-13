@@ -23,12 +23,17 @@ const logout = () => {
     </section>
   </section>
   <footer>
-    <BUTTON color="primary">SETTINGS</BUTTON>
-    <BUTTON color="danger">CLOSE</BUTTON>
+    <BUTTON color="primary"><router-link to="/profile/settings">SETTINGS</router-link></BUTTON>
+    <BUTTON color="danger"><router-link to="/">CLOSE</router-link></BUTTON>
   </footer>
 </template>
 
 <style scoped>
+a {
+  text-decoration: none;
+  color: var(--secondary-color);
+}
+
 .logout-icon {
   position: absolute;
   top: 10px;

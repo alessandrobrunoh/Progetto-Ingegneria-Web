@@ -24,28 +24,27 @@ export default {
 
 <template>
   <section class="card-container">
-    <box>
+    <div class="box">
       <h2>{{ number }}</h2>
       <p>{{ seed }}</p>
-    </box>
+    </div>
   </section>
 </template>
 
 <style scoped>
-box {
+.box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 15vw;
-  height: 13vh;
+  min-width: 15vw;
+  min-height: 13vh;
   border-radius: 15px;
   background-color: var(--primary-color);
   color: var(--secondary-color);
   box-shadow: var(--box-shadow);
+  cursor: pointer;
 }
 
-.card-container{
 
-}
 </style>

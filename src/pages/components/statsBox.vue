@@ -20,29 +20,29 @@ export default {
 <template>
 <section class="statsbox-container">
   <h3><slot></slot></h3>
-  <box>
-    <div>
+  <div class="box">
+    <div class="icon">
       <i :class="`fe-${type}`"></i>
     </div>
     <span>{{ number }}</span>
-  </box>
+  </div>
 </section>
 </template>
 
 <style scoped>
-box {
+.box {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-div,
+.icon,
 span {
   font-size: 1.25rem;
   border: 4px solid var(--primary-color);
   border-radius: 15px 0 0 15px;
 }
-div {
+.icon {
   padding: 10px;
   background-color: var(--primary-color);
 }

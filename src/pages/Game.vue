@@ -1,10 +1,74 @@
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 import { notification } from "@/assets/js/notificationEvent.js";
 import CARD from "./components/Card.vue";
+
+const route = useRoute();
+const router = useRouter();
+const roomCode = ref(route.params.roomCode);
+const userId = ref(null);
+const isInGame = ref(false);
+const isGameStarted = ref(false);
+
+async function fetchUserId() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    userId.value = response.data.id;
+  } catch (error) {
+    console.error('Error fetching user ID:', error);
+  }
+}
+
+async function checkPlayerInGame() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/players`, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    const player = response.data.find(p => p.USER_id === userId.value);
+    isInGame.value = !!player;
+  } catch (error) {
+    console.error('Error checking player in game:', error);
+  }
+}
+
+async function checkGameStarted() {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
+      headers: {
+        'authorization': localStorage.getItem('token')
+      }
+    });
+    isGameStarted.value = response.data[0].game_started;
+  } catch (error) {
+    console.error('Error checking game status:', error);
+  }
+}
+
+onMounted(async () => {
+  await fetchUserId();
+  await checkPlayerInGame();
+  await checkGameStarted();
+  if(!isGameStarted.value) {
+    router.push("/");
+    notification.send("Game has not started yet", "danger");
+  }
+  if(!isInGame.value) {
+    router.push("/");
+    notification.send("You are not in this game", "danger");
+  }
+});
 </script>
 
 <template>
-  <section class="container">
+  <section class="container" v-if="isInGame && isGameStarted">
     <header>
       <h2>Alessandro's Turn</h2>
     </header>
@@ -26,6 +90,7 @@ import CARD from "./components/Card.vue";
   </section>
 </template>
 
+
 <style scoped>
 img {
   width: 50px;
@@ -38,9 +103,8 @@ img {
 
 header {
   background-color: var(--secondary-color);
-  display: flex;
-  justify-content: center;
 }
+
 h2{
   color: var(--primary-color);
 }
@@ -50,6 +114,7 @@ h2{
   justify-content: center;
   align-items: center;
   gap: 50px;
+  height: calc(70vh - 2vh - 2vh - 4vh);
   background-color: var(--game-color);
   
   section {
@@ -64,5 +129,13 @@ h2{
   align-items: center;
   justify-content: center;
   gap: 50px;
+  background-color: var(--secondary-color);
+  padding: 4vh 0;
+}
+
+footer {
+  left: 0;
+  width: 100%;
+  bottom: 0;
 }
 </style>

@@ -22,10 +22,10 @@ export default {
 </script>
 
 <template>
-  <box>
+  <div class="box">
     <i :class="`fe-${type}`"></i>
     <input :type="type" :placeholder="placeholder" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" />
-  </box>
+  </div>
 </template>
 
 <style scoped>
@@ -43,7 +43,7 @@ input:active {
   outline: none;
 }
 
-box {
+.box {
   display: flex;
   gap: 10px;
   padding: 15px;

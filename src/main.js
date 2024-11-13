@@ -19,7 +19,7 @@ const routes = [
     { path: '/profile', component: Profile, meta: { requiresAuth: true }},
     { path: '/leaderboard', component: Leaderboard, meta: { requiresAuth: true }},
     { path: '/:pathMatch(.*)*', redirect: '/' },
-    { path: '/game', component: Game},
+    { path: '/game/:roomCode', component: Game},
     { path: '/profile/settings', component: Settings, meta: { requiresAuth: true }},
     { path: '/rules', component: Rules, meta: { requiresAuth: true }}
 ];

@@ -16,7 +16,7 @@ const shareCode = () => {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(placeholder.value)
       .then(() => {
-        alert('Code copied to clipboard');
+        notification.send("Code copied to clipboard", "success");
       })
       .catch(err => {
         console.error('Failed to copy: ', err);
@@ -29,10 +29,10 @@ const shareCode = () => {
     textarea.select();
     try {
       document.execCommand('copy');
-      alert('Code copied to clipboard');
+      notification.send("Code copied to clipboard", "success");
     } catch (err) {
       console.error('Failed to copy: ', err);
-      alert('Failed to copy code');
+      notification.send("Failed to copy code", "danger");
     }
     document.body.removeChild(textarea);
   }
@@ -42,10 +42,10 @@ const shareCode = () => {
 <template>
   <section class="invitecode-container">
     <h2>Invite Code</h2>
-    <box>
+    <div class="box">
       <input :placeholder="placeholder" readonly/>
       <i @click="shareCode" class="fe-share"></i>
-    </box>
+    </div>
   </section>
 
 </template>
@@ -99,7 +99,7 @@ i {
   font-size: 1.5rem;
 }
 
-box {
+.box {
   display: flex;
   gap: 1vw;
 }

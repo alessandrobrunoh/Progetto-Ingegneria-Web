@@ -2,7 +2,7 @@
 import { notification } from "@/assets/js/notificationEvent.js";
 import { ref } from 'vue';
 import Button from "@/pages/components/Button.vue";
-import CodeInput from "@/pages/components/CodeInput.vue";
+import CODEINPUT from "@/pages/components/CodeInput.vue";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
@@ -39,7 +39,7 @@ const rules = () => {
     <Button @click="createRoom" color="danger">CREATE A ROOM</Button>
     <Button v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</Button>
     <div v-else>
-      <CodeInput v-model="roomCode" placeholder="Insert code"/>
+      <CODEINPUT v-model="roomCode" placeholder="Insert code"/>
     </div>
     <Button @click="rules">RULES</Button>
   </section>

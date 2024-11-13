@@ -1,6 +1,4 @@
 <script setup>
-import { defineProps } from 'vue';
-
 const props = defineProps({
     color: {
         type: String,
@@ -10,7 +8,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <section class="notification-container">
+    <section :style="{ border: `2px solid var(--${color}-color)` }" class="notification-container">
         <section :style="{ color: `var(--${color}-color)` }" class="message-container">
             <p><slot></slot></p>
         </section>
@@ -30,7 +28,6 @@ const props = defineProps({
     background-color: var(--secondary-color);
     gap: 0.5em;
     animation: notification 3s forwards;
-    border: 2px solid var(--danger-color);
     box-shadow: var(--box-shadow);
 }
 

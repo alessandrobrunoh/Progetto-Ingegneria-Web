@@ -40,8 +40,9 @@ body {
 header {
   display: flex;
   justify-content: space-between;
+  position: fixed;
   align-items: center;
-  padding: 1em 2em;
+  padding: 1vh 2vw;
   background-color: var(--primary-color);
   color: var(--secondary-color);
 }

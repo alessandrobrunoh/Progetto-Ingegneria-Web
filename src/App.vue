@@ -1,22 +1,38 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, onUpdated } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import BUTTON from '@/pages/components/Button.vue';
+import NOTIFICATION from '@/pages/components/Notification.vue';
+import { notification } from './assets/js/notificationEvent.js';
 
 const isAuthenticated = ref(false);
+const route = useRoute();
 const router = useRouter();
+const showNotification = notification.showNotification;
+const notificationMessage = notification.notificationMessage;
+const notificationColor = notification.notificationColor;
 
 const checkAuth = () => {
-  try {
-    isAuthenticated.value = !!localStorage.getItem('token');
-    if (!isAuthenticated.value) {
-      router.push('/sign-in');
-    }
-  } catch (error) {
-    console.error('Error checking authentication:', error);
+  const token = localStorage.getItem('token');
+  isAuthenticated.value = !!token;
+  if (!isAuthenticated.value) {
     router.push('/sign-in');
   }
 };
+
+const isGameRoute = () => {
+  const gameRoutePattern = /^\/game\/[^/]+$/;
+  return gameRoutePattern.test(route.path);
+};
+
+const giveUp = () => {
+  notification.send('You gave up', 'danger');
+  router.push('/');
+};
+
+onUpdated(() => {
+  checkAuth();
+});
 
 onMounted(() => {
   checkAuth();
@@ -28,8 +44,9 @@ onMounted(() => {
     {{ notificationMessage }}
   </NOTIFICATION>
   <section v-if="isAuthenticated" class="profile-icon-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
-    <BUTTON color="danger" >GIVE UP</BUTTON>
+    <router-link to="/"><img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389"
+        alt="Vue logo" /></router-link>
+    <BUTTON v-if="isGameRoute()" @click="giveUp" color="danger">GIVE UP</BUTTON>
     <router-link to="/profile">
       <img alt="Avatar Profile" src="@/assets/img/avatars/Avatar-0.svg" />
     </router-link>
