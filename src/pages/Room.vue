@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, onUpdated } from 'vue';
 import { useRoute } from 'vue-router';
 import { io } from 'socket.io-client';
 import axios from 'axios';
@@ -13,7 +13,7 @@ const roomCode = ref('');
 const players = ref([]);
 const userId = ref(null);
 const isHost = ref(false);
-const socket = io(`http://${window.location.hostname}:8000`); 
+const socket = io(`http://${window.location.hostname}:8000`);
 const isGameStarted = ref(false);
 
 async function fetchUserId() {
@@ -77,24 +77,6 @@ async function deleteRoom() {
   }
 }
 
-async function startGame() {
-  try {
-    await axios.post(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/start-game`, {
-      roomCode: roomCode.value
-    }, {
-      headers: {
-        'authorization': localStorage.getItem('token')
-      }
-    });
-    notification.send('Game started successfully', 'success',);
-    // send to /game
-    window.location.href = `/game/${roomCode.value}`;
-  } catch (error) {
-    console.error('Error starting game:', error);
-  }
-}
-
-
 async function checkGameStarted() {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
@@ -108,29 +90,60 @@ async function checkGameStarted() {
   }
 }
 
+async function startGame() {
+  try {
+    const numberOfPlayers = players.value.length;
+    if (numberOfPlayers === 2 || numberOfPlayers === 4) {
+      // Inizializza il gioco
+      await axios.post(`http://${window.location.hostname}:8000/api/game/${roomCode.value}`, {
+        roomCode: roomCode.value
+      }, {
+        headers: {
+          'authorization': localStorage.getItem('token')
+        }
+      });
+
+      // Emit WebSocket event to notify all players to start the game
+      socket.emit('startGame', roomCode.value);
+    } else {
+      notification.send('The game can only be started with 2 or 4 players', 'danger');
+    }
+  } catch (error) {
+    console.error('Error starting game:', error);
+  }
+}
+
+function getButtonColor() {
+  const numberOfPlayers = players.value.length;
+  return (numberOfPlayers === 2 || numberOfPlayers === 4) ? 'success' : 'danger';
+}
+
+
+onUpdated(async () => {
+  socket.on('joinGame', () => {
+    window.location.href = `/game/${roomCode.value}`;
+    notification.send('Gaming Started, redirecting...s', 'success');
+  });
+});
+
 onMounted(async () => {
   roomCode.value = route.params.roomCode;
   await fetchUserId();
   await fetchPlayers();
   await checkGameStarted();
 
-  const player = { user_id: userId.value, name: 'PlayerName' };
+  const player = { user_id: userId.value };
   socket.emit('joinRoom', roomCode.value);
-  socket.emit('playerJoined', roomCode.value, player);
+  socket.emit('playerJoined', player);
 
   socket.on('playerJoined', (player) => {
-    if (player && player.user_id) {
-      players.value.push(player);
-    }
+    players.value.push(player);
   });
 
   socket.on('playerDisconnected', async (player) => {
-    if (player && player.user_id) {
-      players.value = players.value.filter(p => p.user_id !== player.user_id);
-      await fetchPlayers(); // Refresh the player list
-      if (players.value.length === 0) {
-        await deleteRoom();
-      }
+    players.value = players.value.filter(p => p.user_id !== player.user_id);
+    if (players.value.length === 0) {
+      await deleteRoom();
     }
   });
 });
@@ -138,17 +151,11 @@ onMounted(async () => {
 onUnmounted(async () => {
   const player = { user_id: userId.value };
 
-  if (roomCode.value) {
-    socket.emit('leaveRoom', roomCode.value, player);
-    await checkGameStarted();
-    if (!isGameStarted.value) {
-      await removePlayer(userId.value);
-    }
-  } else {
-    console.error('Room code is not set');
+  socket.emit('leaveRoom', roomCode.value, player);
+  await checkGameStarted();
+  if (!isGameStarted.value) {
+    await removePlayer(userId.value);
   }
-
-  socket.disconnect();
 });
 </script>
 
@@ -173,7 +180,7 @@ onUnmounted(async () => {
       </section>
     </section>
     <footer>
-      <BUTTON v-if="isHost" @click="startGame" color="danger">START GAME</BUTTON>
+      <BUTTON v-if="isHost" @click="startGame" :color="getButtonColor()">START GAME</BUTTON>
       <!-- //TODO: Implement the startGame method -->
     </footer>
   </section>

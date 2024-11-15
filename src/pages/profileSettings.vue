@@ -25,18 +25,53 @@ async function fetchUserData() {
         console.log(response.data.avatar);
         console.log(avatar.value);
     } catch (error) {
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            // Reindirizza l'utente alla pagina di login
-            router.push('/sign-in');
+        if (error.response) {
+            notification.send(`Error fetching user data: ${error.response.data.message}`, 'danger');
         } else {
-            console.error('Error fetching user data:', error);
+            notification.send('Error fetching user data. Please try again later.', 'danger');
         }
     }
 }
 
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+const validateForm = () => {
+  let valid = true;
+
+  if (!username.value) {
+    notification.send('Username is required', 'danger');
+    valid = false;
+  }
+
+  if (!email.value) {
+    notification.send('Email is required', 'danger');
+    valid = false;
+  } else if (!validateEmail(email.value)) {
+    notification.send('Invalid email format', 'danger');
+    valid = false;
+  }
+
+  if (!password.value) {
+    notification.send('Password is required', 'danger');
+    valid = false;
+  } else if (password.value.length < 8) {
+    notification.send('Password must be at least 8 characters', 'danger');
+    valid = false;
+  }
+
+  return valid;
+};
+
 async function saveProfile() {
+    if (!validateForm()) {
+        return;
+    }
+
     try {
-        const response = await axios.post(`http://${window.location.hostname}:8000/api/user/save-profile`, {
+        const response = await axios.post(`http://${window.location.hostname}:8000/api/profile/save-profile`, {
             username: username.value,
             email: email.value,
             password: password.value
@@ -45,21 +80,22 @@ async function saveProfile() {
                 'authorization': localStorage.getItem('token')
             }
         });
-        console.log('Profile updated successfully:', response.data);
-        alert('Profile updated successfully');
+        notification.send('Profile updated successfully', 'success');
     } catch (error) {
         if (error.response) {
-            console.error('Error updating profile:', error.response.data);
-            alert(`Error updating profile: ${error.response.data.message}`);
+            notification.send(`Error updating profile: ${error.response.data.message}`, 'danger');
         } else {
-            console.error('Error updating profile:', error.message);
-            alert('Error updating profile. Please try again later.');
+            notification.send('Error updating profile. Please try again later.', 'danger');
         }
     }
 }
 
 function changeIcon() {
     // Logica per cambiare l'icona
+}
+
+function close() {
+    router.push('/');
 }
 
 onMounted(async () => {
@@ -79,6 +115,7 @@ onMounted(async () => {
     </section>
     <footer>
         <BUTTON @click="saveProfile">SAVE</BUTTON>
+        <BUTTON @click="close" color="danger">CLOSE</BUTTON>
     </footer>
 </template>
 

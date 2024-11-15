@@ -19,10 +19,12 @@ const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const userRoutes = require('./routes/userRoutes');
+const gameRoutes = require('./routes/gameRoutes');
 
 app.use('/api', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/game', gameRoutes);
 app.use('/api/room', (req, res, next) => {
     req.io = io;
     next();

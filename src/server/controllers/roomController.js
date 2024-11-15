@@ -120,17 +120,6 @@ const deleteRoom = async (req, res) => {
     });
 }
 
-const startGame = async (req, res) => {
-    const roomCode = req.params.roomCode;
-    const io = req.io;
-    const sql = 'UPDATE rooms SET game_started = 1 WHERE code = ?';
-    db.Connection.query(sql, [roomCode], (err, result) => {
-        if (err) return res.status(500).send('Error starting game');
-        io.to(roomCode).emit('gameStarted');
-        res.status(200).send('Game started');
-    });
-}
-
 const addPlayerToRoom = async (req, res) => {
     const userId = req.user.id;
     const roomCode = req.params.roomCode;
@@ -203,6 +192,5 @@ module.exports = {
     addPlayerToRoom,
     removePlayerToRoom,
     updatePlayerReadyStatus,
-    getRoomStatus,
-    startGame
+    getRoomStatus
 };

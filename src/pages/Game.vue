@@ -11,6 +11,7 @@ const roomCode = ref(route.params.roomCode);
 const userId = ref(null);
 const isInGame = ref(false);
 const isGameStarted = ref(false);
+const players = ref([]);
 
 async function fetchUserId() {
   try {
@@ -34,6 +35,7 @@ async function checkPlayerInGame() {
     });
     const player = response.data.find(p => p.USER_id === userId.value);
     isInGame.value = !!player;
+    players.value = response.data;
   } catch (error) {
     console.error('Error checking player in game:', error);
   }
@@ -50,6 +52,24 @@ async function checkGameStarted() {
   } catch (error) {
     console.error('Error checking game status:', error);
   }
+}
+
+function getCards() {
+  const numberOfPlayers = players.value.length;
+  if (numberOfPlayers === 2) {
+    return [
+      { number: 1, seed: 'Coppe' },
+      { number: 2, seed: 'Bastoni' }
+    ];
+  } else if (numberOfPlayers === 4) {
+    return [
+      { number: 1, seed: 'Coppe' },
+      { number: 2, seed: 'Bastoni' },
+      { number: 4, seed: 'Denari' },
+      { number: 7, seed: 'Spade' }
+    ];
+  }
+  return [];
 }
 
 onMounted(async () => {
@@ -73,12 +93,7 @@ onMounted(async () => {
       <h2>Alessandro's Turn</h2>
     </header>
     <section class="game-table-container">
-      <CARD :number="1" seed="Coppe"></CARD>
-      <section>
-        <CARD :number="2" seed="Bastoni"></CARD>
-        <CARD :number="4" seed="Denari"></CARD>
-      </section>
-      <CARD :number="7" seed="Spade"></CARD>
+      <CARD v-for="(card, index) in getCards()" :key="index" :number="card.number" :seed="card.seed"></CARD>
     </section>
     <footer>
       <section class="players-cards">

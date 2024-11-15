@@ -46,7 +46,7 @@ const saveProfile = async (req, res) => {
         if (err) return res.status(500).send('Error in query');
         res.send('Profile updated successfully');
     });
-}   	
+};  	
 
 module.exports = {
     updateUsername,

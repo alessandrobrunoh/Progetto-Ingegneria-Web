@@ -12,8 +12,7 @@ const {
     deleteRoom,
     addPlayerToRoom,
     removePlayerToRoom,
-    updatePlayerReadyStatus,
-    startGame
+    updatePlayerReadyStatus
 } = require('../controllers/roomController');
 const authenticateToken = require('../utils/authenticateToken');
 
@@ -29,6 +28,5 @@ router.delete('/:roomCode/delete', authenticateToken, deleteRoom);
 router.post('/:roomCode/add-player', authenticateToken, addPlayerToRoom);
 router.post('/:roomCode/remove-player', authenticateToken, removePlayerToRoom);
 router.post('/:roomCode/player/:userId/ready', authenticateToken, updatePlayerReadyStatus);
-router.post('/:roomCode/start-game', authenticateToken, startGame);
 
 module.exports = router;

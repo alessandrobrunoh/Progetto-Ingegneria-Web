@@ -9,15 +9,14 @@ function initializeWebSocket(server) {
     });
 
     io.on('connection', (socket) => {
-      console.log('A user connected');
-      socket.join('lobby');
-
-      socket.on('updateTeams', (roomCode) => {
-        io.to(roomCode).emit('updateTeams');
-      });
-
-      socket.on('updateReady', (roomCode) => {
-        io.to(roomCode).emit('updateReady');
+      socket.on('startGame', (roomCode) => {
+        console.log(`Game started: ${roomCode}`);
+        try {
+          console.log(`Game started: ${roomCode}`);
+          io.to(roomCode).emit('joinGame');
+        } catch (error) {
+          console.error(`Error starting game: ${error.message}`);
+        }
       });
     
       socket.on('joinRoom', (roomCode) => {
@@ -36,14 +35,6 @@ function initializeWebSocket(server) {
           io.to(roomCode).emit('playerDisconnected', player);
         } catch (error) {
           console.error(`Error leaving room: ${error.message}`);
-        }
-      });
-    
-      socket.on('disconnect', () => {
-        try {
-          console.log('A user disconnected');
-        } catch (error) {
-          console.error(`Error during disconnect: ${error.message}`);
         }
       });
     });

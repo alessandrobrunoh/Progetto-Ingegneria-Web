@@ -7,7 +7,4 @@ const getUserData = (req, res) => {
   });
 };
 
-
-
-
 module.exports = { getUserData };

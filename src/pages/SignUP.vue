@@ -59,14 +59,6 @@ const validateForm = () => {
   return valid;
 };
 
-const isAuthenticated = () => {
-  return !!localStorage.getItem('token');
-};
-
-if (isAuthenticated()) {
-  router.push('/');
-}
-
 const handleSignUp = async () => {
   if (!validateForm()) {
     return;
