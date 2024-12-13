@@ -51,6 +51,7 @@ input:active {
   border: 4px solid var(--success-color);
   border-radius: 15px;
   font-size: 1.25rem;
+  flex-direction: row;
   width: 60vw;
   background-color: var(--white-color);
   box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
