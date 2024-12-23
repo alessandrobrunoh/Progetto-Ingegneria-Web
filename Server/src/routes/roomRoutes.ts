@@ -1,0 +1,122 @@
+import express from "express";
+const router = express.Router();
+
+import { checkAuth } from "../controllers/authController";
+import {
+  getRooms,
+  getRoom,
+  getRoomPlayers,
+  getRoomTableCards,
+  getPlayerHand,
+  createRoom,
+  deleteRoom,
+  joinRoom,
+  leaveRoom,
+  startGame,
+  endGame,
+  playCard,
+  passTurn,
+  drawCard,
+} from "../controllers/roomController";
+
+router.use(checkAuth);
+
+/**
+ * @route GET /rooms
+ * @description Ottiene tutte le stanze.
+ * @access Private
+ */
+router.get("s/", getRooms);
+
+/**
+ * @route GET /rooms/:code
+ * @description Ottiene le informazioni di base di una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.get("/:code", getRoom);
+
+/**
+ * @route GET /rooms/:code/players
+ * @description Ottiene tutti i giocatori in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.get("/:code/players", getRoomPlayers);
+
+/**
+ * @route GET /rooms/:code/table-cards
+ * @description Ottiene le carte sul tavolo in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.get("/:code/table-cards", getRoomTableCards);
+
+/**
+ * @route GET /rooms/:code/players/:player_id/hand
+ * @description Ottiene la mano di un giocatore specifico in una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.get("/:code/players/:player_id/hand", getPlayerHand);
+
+/**
+ * @route POST /rooms/create
+ * @description Crea una nuova stanza.
+ * @access Private
+ */
+router.post("/create", createRoom);
+
+/**
+ * @route POST /rooms/delete
+ * @description Elimina una stanza.
+ * @access Private
+ */
+router.post("/delete", deleteRoom);
+
+/**
+ * @route POST /rooms/:code/join
+ * @description Permette di unirsi a una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.post("/:code/join", joinRoom);
+
+/**
+ * @route POST /rooms/:code/leave
+ * @description Permette di lasciare una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.post("/:code/leave", leaveRoom);
+
+/**
+ * @route POST /rooms/:code/start
+ * @description Avvia una partita in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.post("/:code/start", startGame);
+
+/**
+ * @route POST /rooms/:code/end
+ * @description Termina una partita in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.post("/:code/end", endGame);
+
+/**
+ * @route POST /rooms/:code/players/:player_id/play/:card_id
+ * @description Permette a un giocatore di giocare una carta in una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.post("/:code/players/:player_id/play/:card_id", playCard);
+
+/**
+ * @route POST /rooms/:code/players/:player_id/pass
+ * @description Permette a un giocatore di passare il turno in una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.post("/:code/players/:player_id/pass", passTurn);
+
+/**
+ * @route POST /rooms/:code/players/:player_id/draw
+ * @description Permette a un giocatore di pescare una carta in una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.post("/:code/players/:player_id/draw", drawCard);
+
+export default router;
