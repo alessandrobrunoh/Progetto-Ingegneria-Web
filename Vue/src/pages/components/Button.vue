@@ -1,5 +1,6 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
+import { playSound } from "../../assets/js/playSound";
 </script>
 
 <script>
@@ -15,7 +16,7 @@ export default {
 </script>
 
 <template>
-  <button :color="color">
+  <button :color="color" @click="playSound('btn_click')">
     <slot></slot>
   </button>
 </template>

@@ -22,6 +22,7 @@ export const getRooms = async (req: Request, res: Response) => {
         res.json(rows);
     } catch (error) {
         debugPrint('Error occurred while fetching rooms');
+        console.error('Error details:', error);
         res.status(500).send('An error occurred');
     }
 }
@@ -74,6 +75,88 @@ export const getRoomPlayers = async (req: Request, res: Response) => {
     }
 }
 
+
+/**
+ * Ottiene i dati del giocatore in gioco.
+ *
+ * @param req - La richiesta HTTP.
+ * @param res - La risposta HTTP.
+ * @returns Una risposta JSON contenente i dati del giocatore o un messaggio di errore.
+ *
+ * Questo metodo estrae il token di autorizzazione dall'intestazione della richiesta,
+ * verifica la validità del token e recupera l'ID del giocatore. Successivamente,
+ * esegue una query al database per ottenere i dati del giocatore associato al codice
+ * della stanza e all'ID del giocatore. Se si verifica un errore durante il processo,
+ * viene restituito un messaggio di errore.
+ */
+export const getPlayerInGame = async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+
+    const user_id = getUserIdFromToken(token);
+    if (!user_id) {
+        debugPrint('Invalid or expired token');
+        return res.status(401).send('Invalid or expired token');
+    }
+
+    const { code } = req.params;
+
+    try {
+        const connection = await connect();
+        const [rows]: any = await connection.execute('SELECT * FROM players WHERE room_code = ? AND user_id = ?', [code, user_id]);
+        debugPrint(`Fetched player with ID: ${user_id} for room with CODE: ${code}`);
+        debugPrint('Sending player in-game status as JSON response');
+        res.json(rows.length > 0);
+    } catch (error) {
+        debugPrint(`Error occurred while fetching player with ID: ${user_id} for room with CODE: ${code}`);
+        console.error('Error details:', error);
+        res.status(500).send('An error occurred');
+    }
+}
+
+/**
+ * Controlla se il giocatore è l'host della stanza.
+ *
+ * @returns Una risposta JSON che indica se il giocatore è l'host della stanza.
+ *
+ * Questo metodo estrae il token di autorizzazione dall'intestazione della richiesta,
+ * verifica la validità del token e ottiene l'ID utente associato. Successivamente,
+ * esegue una query al database per verificare se l'utente è l'host della stanza
+ * specificata dal codice della stanza nei parametri della richiesta.
+ *
+ * Se il token di autorizzazione è mancante o non valido, viene restituito un errore 401.
+ * In caso di errore durante l'esecuzione della query, viene restituito un errore 500.
+ */
+export const getPlayerIsHost = async (req: Request, res: Response) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+
+    const user_id = getUserIdFromToken(token);
+    if (!user_id) {
+        debugPrint('Invalid or expired token');
+        return res.status(401).send('Invalid or expired token');
+    }
+    
+    const { code } = req.params;
+
+    try {
+        const connection = await connect();
+        const [rows]: any = await connection.execute('SELECT * FROM players WHERE room_code = ? AND user_id = ? AND host = 1', [code, user_id]);
+        debugPrint(`Fetched player with ID: ${user_id} for room with CODE: ${code}`);
+        res.json(rows.length > 0); //return true se lenght > 0
+    } catch (error) {
+        debugPrint(`Error occurred while fetching player with ID: ${user_id} for room with CODE: ${code}`);
+        console.error('Error details:', error);
+        res.status(500).send('An error occurred'); 
+    }
+}
+
 /**
  * Recupera le carte del tavolo di una stanza specifica.
  *
@@ -120,7 +203,6 @@ export const getPlayerHand = async (req: Request, res: Response) => {
     }
 }
 
-
 /**
  * Crea una nuova stanza con un codice univoco.
  * 
@@ -137,8 +219,8 @@ export const createRoom = async (req: Request, res: Response) => {
         return res.status(401).send('Authorization token is missing');
     }
 
-    const userId = getUserIdFromToken(token);
-    if (!userId) {
+    const user_id = getUserIdFromToken(token);
+    if (!user_id) {
         debugPrint('Invalid or expired token');
         return res.status(401).send('Invalid or expired token');
     }
@@ -154,18 +236,18 @@ export const createRoom = async (req: Request, res: Response) => {
         
         const connection = await connect();
         // ? Creo la stanza con il codice generato e il giocatore che ha creato la stanza come giocatore attivo
-        await connection.execute('INSERT INTO rooms (code, turn_player_id) VALUES (?, ?)', [code, userId]);
-        debugPrint(`Created room with CODE: ${code} and user ID: ${userId}`);
+        await connection.execute('INSERT INTO rooms (code, turn_player_id) VALUES (?, ?)', [code, user_id]);
+        debugPrint(`Created room with CODE: ${code} and user ID: ${user_id}`);
         // ? Aggiungo il giocatore che ha creato la stanza come host
-        await connection.execute('INSERT INTO players (room_code, user_id, host) VALUES (?, ?, ?)', [code, userId, true]);
-        debugPrint(`Player with ID: ${userId} joined room with CODE: ${code}`);
+        await connection.execute('INSERT INTO players (room_code, user_id, host) VALUES (?, ?, ?)', [code, user_id, true]);
+        debugPrint(`Player with ID: ${user_id} joined room with CODE: ${code}`);
 
         debugPrint('Sending room code as JSON response');
         res.json(code);
     }
     catch (error) {
         debugPrint('Error occurred while creating room');
-        console.log(error); 
+        console.error('Error details:', error);
         res.status(500).send('An error occurred');
     }
 }
@@ -177,16 +259,26 @@ export const createRoom = async (req: Request, res: Response) => {
  * @param res - La risposta HTTP che verrà inviata al client.
  * 
  * @returns Una risposta HTTP che indica se la stanza è stata eliminata con successo o se si è verificato un errore.
+ * 
+ * @example "DELETE: /api/room/1/delete"
  */
 export const deleteRoom = async (req: Request, res: Response) => {
-    const { id } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+
+    const { code } = req.params;
     try {
         const connection = await connect();
-        await connection.execute('DELETE FROM rooms WHERE id = ?', [id]);
+        await connection.execute('DELETE FROM rooms WHERE code = ?', [code]);
 
-        debugPrint(`Deleted room with ID: ${id}`);
+        debugPrint(`Deleted room with ID: ${code}`);
         res.send('Room deleted');
     } catch (error) {
+        debugPrint(`Error occurred while deleting room with CODE: ${code}`);
+        console.error('Error details:', error);
         res.status(500).send('An error occurred');
     }
 }
@@ -202,15 +294,37 @@ export const deleteRoom = async (req: Request, res: Response) => {
  * @throws Restituisce un errore 500 se si verifica un problema durante l'inserimento del giocatore nella stanza.
  */
 export const joinRoom = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { player_id } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+    
+    const user_id = getUserIdFromToken(token);
+    if (!user_id) {
+        debugPrint('Invalid or expired token');
+        return res.status(401).send('Invalid or expired token');
+    }
+    
+    const { code } = req.params;
+
     try {
         const connection = await connect();
-        await connection.execute('INSERT INTO players (room_code, player_id) VALUES (?, ?)', [id, player_id]);
+        
+        // ? Controlla il numero di giocatori nella stanza
+        const [rows] = await connection.execute('SELECT COUNT(*) as playerCount FROM players WHERE room_code = ?', [code]);
+        const playerCount = rows[0].playerCount;
 
-        debugPrint(`Player with ID: ${player_id} joined room with ID: ${id}`);
+        // ? Alterna i team
+        const team = playerCount % 2 === 0 ? 1 : 2;
+
+        await connection.execute('INSERT INTO players (room_code, user_id, team, host) VALUES (?, ?, ?, ?)', [code, user_id, team, 0]);
+
+        debugPrint(`Player with ID: ${user_id} joined room with CODE: ${code} in team ${team}`);
         res.send('Player joined room');
     } catch (error) {
+        debugPrint(`Error occurred while player with ID: ${user_id} tried to join room with CODE: ${code}`);
+        console.error('Error details:', error);
         res.status(500).send('An error occurred');
     }
 }
@@ -224,18 +338,34 @@ export const joinRoom = async (req: Request, res: Response) => {
  * @returns Una risposta HTTP che indica se il giocatore ha lasciato la stanza con successo o se si è verificato un errore.
  * 
  * @throws Restituisce una risposta HTTP con stato 500 se si verifica un errore durante l'operazione.
+ * 
+ * @example "DELETE: /api/room/1/leave"
  */
 export const leaveRoom = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { player_id } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+    
+    const user_id = getUserIdFromToken(token);
+    if (!user_id) {
+        debugPrint('Invalid or expired token');
+        return res.status(401).send('Invalid or expired token');
+    }
+
+    const { code } = req.params
+
     try {
         const connection = await connect();
-        await connection.execute('DELETE FROM players WHERE room_code = ? AND player_id = ?', [id, player_id]);
+        await connection.execute('DELETE FROM players WHERE room_code = ? AND user_id = ?', [code, user_id]);
 
-        debugPrint(`Player with ID: ${player_id} left room with ID: ${id}`);
+        debugPrint(`Player with ID: ${user_id} left room with CODE: ${code}`);
         res.send('Player left room');
-    } catch (error) { 
-        res.status(500).send('An error occurred'); 
+    } catch (error) {
+        debugPrint(`Error occurred while player with ID: ${user_id} tried to leave room with CODE: ${code}`);
+        console.error('Error details:', error);
+        res.status(500).send('An error occurred');
     }
 }
 
@@ -247,14 +377,24 @@ export const leaveRoom = async (req: Request, res: Response) => {
  * @returns Una risposta che indica se il gioco è stato avviato con successo o se si è verificato un errore.
  */
 export const startGame = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        debugPrint('Authorization token is missing');
+        return res.status(401).send('Authorization token is missing');
+    }
+    
+    const { code } = req.params;
+
     try {
         const connection = await connect();
-        await connection.execute('UPDATE rooms SET status = "in progress" WHERE id = ?', [id]);
-
-        debugPrint(`Game started for room with ID: ${id}`);
+        await connection.execute('UPDATE rooms SET status = "in_progress" WHERE code = ?', [code]);
+        await connection.execute('UPDATE players SET in_game = 1 WHERE room_code = ?', [code]);
+        
+        debugPrint(`Game started for room with CODE: ${code}`);
         res.send('Game started');
     } catch (error) {
+        debugPrint(`Error occurred while starting game for room with CODE: ${code}`);
+        console.error('Error details:', error);
         res.status(500).send('An error occurred');
     }
 }
@@ -350,4 +490,3 @@ export const drawCard = async (req: Request, res: Response) => {
         res.status(500).send('An error occurred');
     }
 }
-

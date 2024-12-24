@@ -5,6 +5,7 @@ import axios from "axios";
 import { ref } from "vue";
 import { useRouter } from 'vue-router';
 import { notification } from "../assets/js/notificationEvent.js";
+import { playSound } from "../assets/js/playSound.js";
 
 const username = ref('');
 const password = ref('');
@@ -26,6 +27,7 @@ const handleSignIn = async () => {
     });
     if (response.data.token) {
       localStorage.setItem('token', response.data.token); // Store token
+      playSound('success');
       notification.send('Logged in successfully', 'success');
       router.push('/');
     } else {
@@ -33,6 +35,7 @@ const handleSignIn = async () => {
     }
   } catch (error) {
     if (error.response && error.response.data) {
+      playSound('danger');
       notification.send('Invalid username or password', 'danger');
     }
   }

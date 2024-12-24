@@ -7,55 +7,71 @@ import CARD from "./components/Card.vue";
 
 const route = useRoute();
 const router = useRouter();
-const roomCode = ref(route.params.roomCode);
-const userId = ref(null);
-const isInGame = ref(false);
-const isGameStarted = ref(false);
+const code = ref(route.params.code);
 const players = ref([]);
+const isGameStarted = ref(false);
 
-async function fetchUserId() {
-  try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
-      headers: {
-        'authorization': localStorage.getItem('token')
-      }
-    });
-    userId.value = response.data.id;
-  } catch (error) {
-    console.error('Error fetching user ID:', error);
+const getPlayers = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
   }
-}
 
-async function checkPlayerInGame() {
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}/players`, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/players`, {
       headers: {
-        'authorization': localStorage.getItem('token')
+        'Authorization': `Bearer ${token}`
       }
     });
-    const player = response.data.find(p => p.USER_id === userId.value);
-    isInGame.value = !!player;
     players.value = response.data;
   } catch (error) {
-    console.error('Error checking player in game:', error);
+    console.error('Error fetching players:', error);
   }
-}
+};
 
-async function checkGameStarted() {
+const getRoom = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
+  }
+
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${roomCode.value}`, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}`, {
       headers: {
-        'authorization': localStorage.getItem('token')
+        'Authorization': `Bearer ${token}`
       }
     });
-    isGameStarted.value = response.data[0].game_started;
+    const data = response.data;
+    isGameStarted.value = data.status === 'in_progress';
   } catch (error) {
-    console.error('Error checking game status:', error);
+    console.error('Error fetching room:', error);
   }
-}
+};
+
+const getPlayerInGame = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/player/in_game`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching room players:', error);
+  }
+};
 
 function getCards() {
   const numberOfPlayers = players.value.length;
+  console.log(numberOfPlayers);
   if (numberOfPlayers === 2) {
     return [
       { number: 1, seed: 'Coppe' },
@@ -73,22 +89,25 @@ function getCards() {
 }
 
 onMounted(async () => {
-  await fetchUserId();
-  await checkPlayerInGame();
-  await checkGameStarted();
-  if(!isGameStarted.value) {
+  await getPlayers();
+  await getRoom();
+  if (!isGameStarted.value) {
     router.push("/");
     notification.send("Game has not started yet", "danger");
   }
-  if(!isInGame.value) {
+  if (!getPlayerInGame()) {
     router.push("/");
-    notification.send("You are not in this game", "danger");
+    notification.send("You are not part of this game", "danger");
   }
+});
+
+onUnmounted(() => {
+  
 });
 </script>
 
 <template>
-  <section class="container" v-if="isInGame && isGameStarted">
+  <section class="container" v-if="getPlayerInGame() && isGameStarted">
     <header>
       <h2>Alessandro's Turn</h2>
     </header>

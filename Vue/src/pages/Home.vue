@@ -1,14 +1,14 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
 import { ref } from 'vue';
-import Button from "@/pages/components/Button.vue";
+import BUTTON from "@/pages/components/Button.vue";
 import CODEINPUT from "@/pages/components/CodeInput.vue";
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
 const joinButton = ref(true);
-const roomCode = ref('');
+const code = ref('');
 
 const switchJoinButton = () => {
   joinButton.value = false;
@@ -37,12 +37,12 @@ const rules = () => {
 <template>
   <section class="menu-container">
     <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
-    <Button @click="createRoom" color="danger">CREATE A ROOM</Button>
-    <Button v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</Button>
+    <BUTTON @click="createRoom" color="danger">CREATE A ROOM</BUTTON>
+    <BUTTON v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</BUTTON>
     <div v-else>
-      <CODEINPUT v-model="roomCode" placeholder="Insert code"/>
+      <CODEINPUT v-model="code"/>
     </div>
-    <Button @click="rules">RULES</Button>
+    <BUTTON @click="rules">RULES</BUTTON>
   </section>
 </template>
 

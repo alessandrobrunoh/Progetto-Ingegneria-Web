@@ -6,6 +6,8 @@ import {
   getRooms,
   getRoom,
   getRoomPlayers,
+  getPlayerInGame,
+  getPlayerIsHost,
   getRoomTableCards,
   getPlayerHand,
   createRoom,
@@ -43,6 +45,21 @@ router.get("/:code", getRoom);
 router.get("/:code/players", getRoomPlayers);
 
 /**
+ * @route GET /rooms/:code/player/:player_id
+ * @description Ottiene le informazioni di un giocatore specifico in una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.get("/:code/player/in_game", getPlayerInGame);
+
+
+/**
+ * @route GET /rooms/:code/player/:player_id/is_host
+ * @description Ottiene se un giocatore è l'host di una stanza specifica tramite ROOM_ID e PLAYER_ID.
+ * @access Private
+ */
+router.get("/:code/player/is_host", getPlayerIsHost);
+
+/**
  * @route GET /rooms/:code/table-cards
  * @description Ottiene le carte sul tavolo in una stanza specifica tramite ROOM_ID.
  * @access Private
@@ -68,7 +85,7 @@ router.post("/create", createRoom);
  * @description Elimina una stanza.
  * @access Private
  */
-router.post("/delete", deleteRoom);
+router.delete("/:code/delete", deleteRoom);
 
 /**
  * @route POST /rooms/:code/join
@@ -82,7 +99,7 @@ router.post("/:code/join", joinRoom);
  * @description Permette di lasciare una stanza specifica tramite ROOM_ID.
  * @access Private
  */
-router.post("/:code/leave", leaveRoom);
+router.delete("/:code/leave", leaveRoom);
 
 /**
  * @route POST /rooms/:code/start
