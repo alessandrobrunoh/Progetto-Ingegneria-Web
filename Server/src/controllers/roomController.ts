@@ -89,7 +89,7 @@ export const getRoomPlayers = async (req: Request, res: Response) => {
  * della stanza e all'ID del giocatore. Se si verifica un errore durante il processo,
  * viene restituito un messaggio di errore.
  */
-export const getPlayerInGame = async (req: Request, res: Response) => {
+export const getPlayerInRoom = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
         debugPrint('Authorization token is missing');

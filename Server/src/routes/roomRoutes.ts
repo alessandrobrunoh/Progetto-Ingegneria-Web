@@ -6,7 +6,7 @@ import {
   getRooms,
   getRoom,
   getRoomPlayers,
-  getPlayerInGame,
+  getPlayerInRoom,
   getPlayerIsHost,
   getRoomTableCards,
   getPlayerHand,
@@ -45,12 +45,11 @@ router.get("/:code", getRoom);
 router.get("/:code/players", getRoomPlayers);
 
 /**
- * @route GET /rooms/:code/player/:player_id
+ * @route GET /rooms/:code/player/in_room
  * @description Ottiene le informazioni di un giocatore specifico in una stanza specifica tramite ROOM_ID e PLAYER_ID.
  * @access Private
  */
-router.get("/:code/player/in_game", getPlayerInGame);
-
+router.get("/:code/player/in_room", getPlayerInRoom);
 
 /**
  * @route GET /rooms/:code/player/:player_id/is_host

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUpdated } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import axios from 'axios';
 import BUTTON from '@/pages/components/Button.vue';
 import NOTIFICATION from '@/pages/components/Notification.vue';
 import { notification } from './assets/js/notificationEvent.js';
@@ -11,6 +12,7 @@ const router = useRouter();
 const showNotification = notification.showNotification;
 const notificationMessage = notification.notificationMessage;
 const notificationColor = notification.notificationColor;
+const inGame = ref(false);
 
 const checkAuth = () => {
   const token = localStorage.getItem('token');
@@ -30,8 +32,34 @@ const giveUp = () => {
   router.push('/');
 };
 
-onUpdated(() => {
+const isUserInGame = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/player/in_game`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if(!response.data.room_code) {
+      return;
+    }
+    if (response.data.room_code.length > 0) {
+      router.push(`/game/${response.data.room_code}`);
+      return;
+    }
+  } catch (error) {
+    console.error('Error fetching players:', error);
+  }
+};
+
+onUpdated(async () => {
   checkAuth();
+  await isUserInGame();
 });
 
 onMounted(() => {

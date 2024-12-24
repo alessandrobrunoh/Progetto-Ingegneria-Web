@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { connect } from "../utils/database";
 import { debugPrint } from "../utils/debugPrint";
+import { getUserIdFromToken } from "../utils/getIdByToken";
 
 /**
  * Recupera un utente dal database in base all'ID fornito nella richiesta.

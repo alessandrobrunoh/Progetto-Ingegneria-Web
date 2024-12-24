@@ -44,13 +44,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(500).send("JWT secret is not defined");
     }
 
-    console.log("User logged in:", user.id);
-
     const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
       expiresIn: process.env.TOKEN_EXPIRE,
     });
     res.json({ token });
-    console.log("Token generated:", token);
   } catch (error) {
     res.status(500).send("An error occurred");
   }

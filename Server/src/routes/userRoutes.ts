@@ -1,14 +1,18 @@
 import express from "express";
-import { checkAuth } from "../controllers/authController";
-import { getUser } from "../controllers/userController";
-
-/**
- * Questo modulo gestisce le richieste relative agli utenti.
- */
 const router = express.Router();
 
+import { checkAuth } from "../controllers/authController";
 router.use(checkAuth);
 
+import {
+  getUser
+} from "../controllers/userController";
+
+/**
+ * @route GET /user/:id
+ * @description Ottiene tutti gli utenti.
+ * @access Private
+ */
 router.get("/:id", getUser);
 
 export default router;

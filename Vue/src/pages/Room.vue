@@ -13,7 +13,7 @@ const route = useRoute();
 const router = useRouter();
 const code = ref(route.params.code);
 const players = ref([{ name: "null", host: 0 }]);
-const socket = ref(null);
+const socket = ref(io(`http://${window.location.hostname}:8000`));
 const isGameStarted = ref(false);
 const countdown = ref(-1);
 const isHost = ref(false);
@@ -142,6 +142,32 @@ const deleteRoom = async () => {
   }
 };
 
+/**
+ * Verifica se l'utente è presente nella stanza.
+ */
+const isUserInRoom = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return false;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/player/in_room`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking user in room:', error);
+    return false;
+  }
+};
+
+/**
+ * Verifica se il giocatore è l'host della stanza.
+ */
 const isPlayerHost = async () => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -163,8 +189,6 @@ const isPlayerHost = async () => {
 };
 /**
  * Avvia il gioco in modo asincrono.
- * 
- * @returns Una promessa che si risolve quando il gioco è stato avviato.
  */
 const startGame = async () => {
   console.log(players.value.length);
@@ -191,6 +215,7 @@ const startGame = async () => {
       countdown.value--;
       if (countdown.value === 0) {
         clearInterval(interval);
+        isGameStarted.value = true;
         router.push('/game/' + code.value);
       }
     }, 1000);
@@ -202,8 +227,6 @@ const startGame = async () => {
 
 /**
  * Restituisce il colore del pulsante.
- * 
- * @returns {string} Il colore del pulsante.
  */
 const getButtonColor = () => {
   if (players.value.length === 2 || players.value.length === 4) {
@@ -225,6 +248,11 @@ const updatePlayerNames = async () => {
 };
 
 onMounted(async () => {
+  if (!await isUserInRoom()) {
+    router.push('/');
+    return;
+  }
+
   await getRoom();
   await getPlayers();
   await updatePlayerNames();
@@ -258,13 +286,17 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   // Chiudi la connessione WebSocket quando il componente viene smontato
-  await leaveRoom();
+  if(!isGameStarted.value) {
+    console.log(isGameStarted.value);
+    await leaveRoom();
+  }
+  
   if (socket) {
     socket.value.emit('leaveRoom', code.value, players.value[0].name);
     socket.value.disconnect();
   }
 
-  if (players.value.length < 2 && !isGameStarted.value) {
+  if (players.value.length === 0 && !isGameStarted.value) {
     await deleteRoom();
   }
 });
