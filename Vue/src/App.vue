@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUpdated } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import BUTTON from '@/pages/components/Button.vue';
@@ -14,11 +14,28 @@ const notificationMessage = notification.notificationMessage;
 const notificationColor = notification.notificationColor;
 const inGame = ref(false);
 
-const checkAuth = () => {
+const checkAuth = async () => {
   const token = localStorage.getItem('token');
   isAuthenticated.value = !!token;
   if (!isAuthenticated.value) {
     router.push('/sign-in');
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/auth/checkauth`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.data === "Logged out successfully") {
+      localStorage.removeItem('token');
+      notification.send('You have been logged out', 'success');
+      router.push('/sign-in');
+    }
+  } catch (error) {
+    console.error('Error checking auth:', error);
   }
 };
 
@@ -57,13 +74,14 @@ const isUserInGame = async () => {
   }
 };
 
-onUpdated(async () => {
-  checkAuth();
+onMounted(async () => {
+  await checkAuth();
   await isUserInGame();
 });
 
-onMounted(() => {
-  checkAuth();
+onUnmounted(async () => {
+  await checkAuth();
+  await isUserInGame();
 });
 </script>
 

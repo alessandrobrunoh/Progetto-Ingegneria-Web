@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import { connect } from "../utils/database";
 import { getUserIdFromToken } from "../utils/getIdByToken";
 
+const invalidatedTokens: string[] = [];
+
 /**
  * Gestisce il login dell'utente validando le credenziali e generando un token JWT.
  *
@@ -128,8 +130,8 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
   try {
     const token = req.headers.authorization?.split(" ")[1];
 
-    if (!token) {
-      console.log("Authorization token is missing");
+    if (!token || token === '') {
+      console.log("Authorization token is missing or empty");
       return res.status(401).send("Unauthorized");
     }
 
@@ -138,11 +140,16 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
       return res.status(500).send("JWT secret is not defined");
     }
 
+    if (invalidatedTokens.includes(token)) {
+      console.log("Token has been invalidated");
+      return res.status(403).send("Invalid token.");
+    }
+
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
           console.log("Token has expired:", err);
-          return res.status(401).send("Token has expired.");
+          return logout(req, res); // Chiama la funzione di logout
         } else {
           console.log("Invalid token:", err);
           return res.status(403).send("Invalid token.");
@@ -155,4 +162,14 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
     console.log("An error occurred:", error);
     res.status(500).send("An error occurred");
   }
+};
+
+/**
+ * Effettua il logout dell'utente.
+ *
+ * @param req - La richiesta HTTP.
+ * @param res - La risposta HTTP.
+ */
+export const logout = (req: Request, res: Response) => {
+  res.status(200).send("Logged out successfully");
 };

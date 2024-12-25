@@ -1,5 +1,5 @@
 import express from "express";
-import { login, register, checkAuth } from "../controllers/authController";
+import { login, register, checkAuth, logout } from "../controllers/authController";
 
 /**
  * Questo modulo gestisce le richieste relative all'autenticazione.
@@ -21,6 +21,14 @@ router.post("/login", login);
  * @access Public
  */
 router.post("/register", register);
+
+/**
+ * @method GET
+ * @route /logout
+ * @description Controlla se l'utente è autenticato.
+ * @access Private
+ */
+router.get("/logout", logout);
 
 /**
  * @method GET
