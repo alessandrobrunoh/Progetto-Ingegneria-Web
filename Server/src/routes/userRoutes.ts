@@ -4,13 +4,18 @@ const router = express.Router();
 import { checkAuth } from "../controllers/authController";
 router.use(checkAuth);
 
-import {
-  getUser
-} from "../controllers/userController";
+import { getUser, getUserId } from "../controllers/userController";
+
+/**
+ * @route GET /user
+ * @description Ottiene l'ID dell'utente.
+ * @access Private
+ */
+router.get("/", getUserId);
 
 /**
  * @route GET /user/:id
- * @description Ottiene tutti gli utenti.
+ * @description Ottiene le informazioni di un utente specifico tramite USER_ID.
  * @access Private
  */
 router.get("/:id", getUser);

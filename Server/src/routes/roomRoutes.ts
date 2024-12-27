@@ -19,6 +19,7 @@ import {
   playCard,
   passTurn,
   drawCard,
+  giveUp,
 } from "../controllers/roomController";
 
 router.use(checkAuth);
@@ -28,7 +29,7 @@ router.use(checkAuth);
  * @description Ottiene tutte le stanze.
  * @access Private
  */
-router.get("s/", getRooms);
+router.get("/browse", getRooms);
 
 /**
  * @route GET /rooms/:code
@@ -63,14 +64,14 @@ router.get("/:code/player/is_host", getPlayerIsHost);
  * @description Ottiene le carte sul tavolo in una stanza specifica tramite ROOM_ID.
  * @access Private
  */
-router.get("/:code/table-cards", getRoomTableCards);
+router.get("/:code/table", getRoomTableCards);
 
 /**
  * @route GET /rooms/:code/players/:player_id/hand
  * @description Ottiene la mano di un giocatore specifico in una stanza specifica tramite ROOM_ID e PLAYER_ID.
  * @access Private
  */
-router.get("/:code/players/:player_id/hand", getPlayerHand);
+router.get("/:code/player/:player_id/hand", getPlayerHand);
 
 /**
  * @route POST /rooms/create
@@ -119,20 +120,27 @@ router.post("/:code/end", endGame);
  * @description Permette a un giocatore di giocare una carta in una stanza specifica tramite ROOM_ID e PLAYER_ID.
  * @access Private
  */
-router.post("/:code/players/:player_id/play/:card_id", playCard);
+router.post("/:code/player/play/:number/:seed", playCard);
 
 /**
  * @route POST /rooms/:code/players/:player_id/pass
  * @description Permette a un giocatore di passare il turno in una stanza specifica tramite ROOM_ID e PLAYER_ID.
  * @access Private
  */
-router.post("/:code/players/:player_id/pass", passTurn);
+router.post("/:code/player/pass", passTurn);
 
 /**
  * @route POST /rooms/:code/players/:player_id/draw
  * @description Permette a un giocatore di pescare una carta in una stanza specifica tramite ROOM_ID e PLAYER_ID.
  * @access Private
  */
-router.post("/:code/players/:player_id/draw", drawCard);
+router.post("/:code/player/draw", drawCard);
+
+/**
+ * @route POST /rooms/:code/player/give_up
+ * @description Permette a un giocatore di abbandonare la partita in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.post("/:code/player/give_up", giveUp);
 
 export default router;

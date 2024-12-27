@@ -129,7 +129,6 @@ export const register = async (req: Request, res: Response) => {
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-
     if (!token || token === '') {
       console.log("Authorization token is missing or empty");
       return res.status(401).send("Unauthorized");
@@ -148,10 +147,10 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
-          console.log("Token has expired:", err);
+          console.error("Token has expired:", err);
           return logout(req, res); // Chiama la funzione di logout
         } else {
-          console.log("Invalid token:", err);
+          console.error("Invalid token:", err);
           return res.status(403).send("Invalid token.");
         }
       }

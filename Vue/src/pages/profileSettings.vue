@@ -2,23 +2,27 @@
 import { notification } from "@/assets/js/notificationEvent.js";
 import INPUT from "./components/Input.vue";
 import BUTTON from "./components/Button.vue";
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import SELECT from "./components/Select.vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 import { useRouter } from "vue-router";
 
-const username = ref('');
-const email = ref('');
-const password = ref('');
-const avatar = ref('');
+const username = ref("");
+const email = ref("");
+const password = ref("");
+const avatar = ref("");
 const router = useRouter();
 
 async function fetchUserData() {
     try {
-        const response = await axios.get(`http://${window.location.hostname}:8000/api/user/`, {
-            headers: {
-                'authorization': localStorage.getItem('token')
+        const response = await axios.get(
+            `http://${window.location.hostname}:8000/api/user/`,
+            {
+                headers: {
+                    authorization: localStorage.getItem("token"),
+                },
             }
-        });
+        );
         username.value = response.data.username;
         email.value = response.data.email;
         avatar.value = response.data.avatar;
@@ -26,44 +30,52 @@ async function fetchUserData() {
         console.log(avatar.value);
     } catch (error) {
         if (error.response) {
-            notification.send(`Error fetching user data: ${error.response.data.message}`, 'danger');
+            notification.send(
+                `Error fetching user data: ${error.response.data.message}`,
+                "danger"
+            );
         } else {
-            notification.send('Error fetching user data. Please try again later.', 'danger');
+            notification.send(
+                "Error fetching user data. Please try again later.",
+                "danger"
+            );
         }
     }
 }
 
 const validateEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
 };
 
 const validateForm = () => {
-  let valid = true;
+    let valid = true;
 
-  if (!username.value) {
-    notification.send('Username is required', 'danger');
-    valid = false;
-  }
+    if (!username.value) {
+        notification.send("Username is required", "danger");
+        valid = false;
+    }
 
-  if (!email.value) {
-    notification.send('Email is required', 'danger');
-    valid = false;
-  } else if (!validateEmail(email.value)) {
-    notification.send('Invalid email format', 'danger');
-    valid = false;
-  }
+    if (!email.value) {
+        notification.send("Email is required", "danger");
+        valid = false;
+    } else if (!validateEmail(email.value)) {
+        notification.send("Invalid email format", "danger");
+        valid = false;
+    }
 
-  if (!password.value) {
-    notification.send('Password is required', 'danger');
-    valid = false;
-  } else if (password.value.length < 8) {
-    notification.send('Password must be at least 8 characters', 'danger');
-    valid = false;
-  }
+    if (!password.value) {
+        notification.send("Password is required", "danger");
+        valid = false;
+    } else if (password.value.length < 8) {
+        notification.send("Password must be at least 8 characters", "danger");
+        valid = false;
+    }
 
-  return valid;
+    return valid;
 };
+
+// @todo da rimuovere tutta sta roba qua sopra
 
 async function saveProfile() {
     if (!validateForm()) {
@@ -71,21 +83,31 @@ async function saveProfile() {
     }
 
     try {
-        const response = await axios.post(`http://${window.location.hostname}:8000/api/profile/save-profile`, {
-            username: username.value,
-            email: email.value,
-            password: password.value
-        }, {
-            headers: {
-                'authorization': localStorage.getItem('token')
+        const response = await axios.post(
+            `http://${window.location.hostname}:8000/api/profile/save-profile`,
+            {
+                username: username.value,
+                email: email.value,
+                password: password.value,
+            },
+            {
+                headers: {
+                    authorization: localStorage.getItem("token"),
+                },
             }
-        });
-        notification.send('Profile updated successfully', 'success');
+        );
+        notification.send("Profile updated successfully", "success");
     } catch (error) {
         if (error.response) {
-            notification.send(`Error updating profile: ${error.response.data.message}`, 'danger');
+            notification.send(
+                `Error updating profile: ${error.response.data.message}`,
+                "danger"
+            );
         } else {
-            notification.send('Error updating profile. Please try again later.', 'danger');
+            notification.send(
+                "Error updating profile. Please try again later.",
+                "danger"
+            );
         }
     }
 }
@@ -95,12 +117,13 @@ function changeIcon() {
 }
 
 function close() {
-    router.push('/');
+    router.push("/");
 }
 
 onMounted(async () => {
     await fetchUserData();
 });
+
 </script>
 
 <template>
@@ -112,6 +135,7 @@ onMounted(async () => {
         <INPUT v-model="username" placeholder="New Username" type="username" />
         <INPUT v-model="email" placeholder="New Email" type="email" />
         <INPUT v-model="password" placeholder="New Password" type="password" />
+        <SELECT v-model="theme" />
     </section>
     <footer>
         <BUTTON @click="saveProfile">SAVE</BUTTON>
@@ -123,9 +147,10 @@ onMounted(async () => {
 .avatar-container {
     display: flex;
     align-items: flex-end;
+    justify-content: center;
 
     img {
-        width: 15rem;
+        width: 20vw;
         height: auto;
     }
 
@@ -134,15 +159,11 @@ onMounted(async () => {
     }
 }
 
-
-
 .profile-settings-container {
     display: flex;
-    width: 80vw;
     flex-direction: column;
     align-items: center;
-    height: 50vh;
-    gap: 5vh;
+    gap: 2vh;
     justify-content: space-between;
     position: relative;
 }

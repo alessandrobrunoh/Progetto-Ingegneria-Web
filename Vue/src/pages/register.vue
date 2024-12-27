@@ -13,7 +13,6 @@ const password = ref('');
 const c_password = ref('');
 
 
-// @todo DA TOGLIERE TUTTA QUESTA PARTE SOPRA ENORME
 // @audit-issue non è necessario fare un controllo di validazione per la password
 
 const handleSignUp = async () => {

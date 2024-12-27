@@ -23,10 +23,14 @@ const createRoom = async () => {
     });
 
     const code = response.data;
-    await router.push(`/room/${code}`);
+    router.push(`/room/${code}`);
   } catch (error) {
     console.error('Error creating room:', error);
   }
+};
+
+const browseRooms = () => {
+  router.push('/rooms');
 };
 
 const rules = () => {
@@ -37,6 +41,7 @@ const rules = () => {
 <template>
   <section class="menu-container">
     <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
+    <BUTTON @click="browseRooms" color="link">BROWSE ROOMS</BUTTON>
     <BUTTON @click="createRoom" color="danger">CREATE A ROOM</BUTTON>
     <BUTTON v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</BUTTON>
     <div v-else>

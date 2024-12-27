@@ -31,6 +31,7 @@ button {
   background-color: var(--primary-color);
   cursor: pointer;
   box-shadow: var(--box-shadow);
+  transition: transform 0.2s;
 }
 
 
@@ -60,6 +61,10 @@ button[color="silver"] {
 
 button[color="grey"] {
   background-color: var(--grey-color);
+}
+
+button[color="link"] {
+  background-color: var(--link-color);
 }
 
 button:first-of-type {

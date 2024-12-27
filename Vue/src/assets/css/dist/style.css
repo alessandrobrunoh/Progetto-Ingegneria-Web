@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Itim&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
-@import url("../fonts/fonts.scss");
-
+@import url("https://fonts.googleapis.com/css2?family=Itim&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+@import url("../../fonts/fonts.scss");
 :root body {
   --primary-color: #896A57;
   --secondary-color: #F2E8CF;
@@ -20,23 +19,24 @@
   --light-danger-color: #db4f51;
   --box-shadow: 0 4px 4px rgb(0 0 0 / 20%);
 }
-:root body[theme="dark"] {
-  --primary-color: #7676f2;
-  --secondary-color: #F1E8B8;
-  --danger-color: #D05353;
-  --gold-color: #D1AE54;
-  --silver-color: #BEBEBE;
-  --success-color: rgb(121, 178, 61);
-  --game-color: #63a01e;
-  --link-color: #c85cdd;
+
+:root body[theme=dark] {
+  --primary-color: #4A90E2;
+  --secondary-color: #50E3C2;
+  --danger-color: #D0021B;
+  --gold-color: #F5A623;
+  --silver-color: #B8E986;
+  --success-color: #7ED321;
+  --game-color: #417505;
+  --link-color: #BD10E0;
   --dark-color: #4A4A4A;
   --light-color: #F8E71C;
   --white-color: #FFFFFF;
   --black-color: #000000;
   --grey-color: #9B9B9B;
-  --dark-secondary-color: rgb(225, 213, 141);
-  --dark-danger-color: #a10316;
-  --light-danger-color: rgb(241, 57, 79);
+  --dark-secondary-color: #7B7B7B;
+  --dark-danger-color: #D0021B;
+  --light-danger-color: #F5A623;
 }
 
 * {

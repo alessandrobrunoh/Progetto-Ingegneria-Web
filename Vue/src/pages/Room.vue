@@ -13,10 +13,10 @@ const route = useRoute();
 const router = useRouter();
 const code = ref(route.params.code);
 const players = ref([{ name: "null", host: 0 }]);
-const socket = ref(io(`http://${window.location.hostname}:8000`));
 const isGameStarted = ref(false);
 const countdown = ref(-1);
 const isHost = ref(false);
+const socket = ref(io(`http://${window.location.hostname}:8000`));
 
 /**
  * Ottiene il codice della stanza dalla API.
@@ -38,6 +38,10 @@ const getRoom = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
+    if(response.data === "Logged out successfully") {
+      localStorage.removeItem('token');
+      return router.push('/');
+    }
     if (response.data.length === 0) {
       return router.push('/');
     }
@@ -293,7 +297,6 @@ onUnmounted(async () => {
   
   if (socket) {
     socket.value.emit('leaveRoom', code.value, players.value[0].name);
-    socket.value.disconnect();
   }
 
   if (players.value.length === 0 && !isGameStarted.value) {
@@ -324,10 +327,10 @@ onUnmounted(async () => {
   </section>
   <footer>
     <BUTTON v-if="isHost" @click="startGame" :color="getButtonColor()">START GAME</BUTTON>
-    <div v-if="countdown >= 0" class="countdown-overlay">
+  </footer>
+  <div v-if="countdown >= 0" class="countdown-overlay">
       <div class="countdown-text">{{ countdown > 0 ? countdown : 'Good Luck' }}</div>
     </div>
-  </footer>
 </template>
 
 <style scoped>

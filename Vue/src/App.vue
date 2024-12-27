@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUpdated } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import BUTTON from '@/pages/components/Button.vue';
@@ -12,7 +12,8 @@ const router = useRouter();
 const showNotification = notification.showNotification;
 const notificationMessage = notification.notificationMessage;
 const notificationColor = notification.notificationColor;
-const inGame = ref(false);
+const player_id = ref(null);
+const theme = ref('light');
 
 const checkAuth = async () => {
   const token = localStorage.getItem('token');
@@ -21,37 +22,12 @@ const checkAuth = async () => {
     router.push('/sign-in');
     return;
   }
-
-  try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/auth/checkauth`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (response.data === "Logged out successfully") {
-      localStorage.removeItem('token');
-      notification.send('You have been logged out', 'success');
-      router.push('/sign-in');
-    }
-  } catch (error) {
-    console.error('Error checking auth:', error);
-  }
 };
 
-const isGameRoute = () => {
-  const gameRoutePattern = /^\/game\/[^/]+$/;
-  return gameRoutePattern.test(route.path);
-};
-
-const giveUp = () => {
-  notification.send('You gave up', 'danger');
-  router.push('/');
-};
-
-const isUserInGame = async () => {
+const isInGame = async () => {
   const token = localStorage.getItem('token');
   if (!token) {
+    console.error('Authorization token is missing');
     return;
   }
 
@@ -61,27 +37,93 @@ const isUserInGame = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-
-    if(!response.data.room_code) {
-      return;
+    if (response.data.length > 0 && !isGameRoute()) {
+      notification.send('You are in a game', 'danger');
+      router.push(`/game/${response.data[0].room_code}`);
     }
-    if (response.data.room_code.length > 0) {
-      router.push(`/game/${response.data.room_code}`);
-      return;
-    }
+    return;
   } catch (error) {
-    console.error('Error fetching players:', error);
+    console.error('Error fetching room code:', error);
+  }
+};
+
+const isGameRoute = () => {
+  const gameRoutePattern = /^\/game\/[^/]+$/;
+  return gameRoutePattern.test(route.path);
+};
+
+const giveUp = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
+  }
+
+  try {
+    const response = await axios.post(`http://${window.location.hostname}:8000/api/player/give_up`, {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    console.log('Give up response:', response.data);
+    notification.send('You gave up', 'danger');
+    router.push('/');
+    return response.data;
+  } catch (error) {
+    console.error('Error giving up:', error);
+  }
+  notification.send('You gave up', 'danger');
+  router.push('/');
+};
+
+const getUserID = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return null;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user ID:', error);
+    return null;
+  }
+};
+
+const getTheme = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}/`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    document.body.setAttribute('theme', response.data.theme);
+  } catch (error) {
+    console.error('Error fetching theme:', error);
   }
 };
 
 onMounted(async () => {
   await checkAuth();
-  await isUserInGame();
+  player_id.value = await getUserID();
+  await getTheme();
 });
 
-onUnmounted(async () => {
+onUpdated(async () => {
   await checkAuth();
-  await isUserInGame();
+  await isInGame();
 });
 </script>
 
@@ -97,7 +139,7 @@ onUnmounted(async () => {
       <img alt="Avatar Profile" src="@/assets/img/avatars/Avatar-0.svg" />
     </router-link>
   </section>
-  <main>
+  <main :theme="theme">
     <router-view></router-view>
   </main>
 </template>

@@ -33,14 +33,14 @@ app.use((req: Request, res: Response, next) => {
   const query = req.query;
   const body = req.body;
 
-  console.log(" NEW REQUEST:");
-  console.log("  - METHOD:", method);
-  console.log(`  - URL: ${url}`);
-  console.log("  - PARAMS:", params);
-  console.log("  - QUERY:", query);
-  console.log("  - BODY:", body);
+  // console.log(" NEW REQUEST:");
+  // console.log("  - METHOD:", method);
+  // console.log(`  - URL: ${url}`);
+  // console.log("  - PARAMS:", params);
+  // console.log("  - QUERY:", query);
+  // console.log("  - BODY:", body);
 
-  printLines(25);
+  // printLines(25);
   next();
 });
 
