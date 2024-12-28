@@ -1,7 +1,3 @@
-<script setup>
-import { notification } from "@/assets/js/notificationEvent.js";
-</script>
-
 <script>
 export default {
   name: "TeamBox",
@@ -10,16 +6,19 @@ export default {
       type: String,
     },
     host: {
-      type: Boolean,
-      default: false,
-    }
+      type: Number,
+      default: 0,
+    },
+    avatar: {
+      type: Number,
+    },
   }
 }
 </script>
 
 <template>
   <button :color="color">
-    <img src="@/assets/img/avatars/Avatar-0.svg" alt="Avatar Profile"/>
+    <img :src="`../assets/img/avatars/${avatar}.svg`" alt="Avatar Profile"/>
     <slot></slot>
     <i v-if="host" class="cm-crown"></i>
   </button>

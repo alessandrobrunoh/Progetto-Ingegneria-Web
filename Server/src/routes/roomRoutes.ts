@@ -20,6 +20,7 @@ import {
   passTurn,
   drawCard,
   giveUp,
+  getLastCard,
 } from "../controllers/roomController";
 
 router.use(checkAuth);
@@ -142,5 +143,12 @@ router.post("/:code/player/draw", drawCard);
  * @access Private
  */
 router.post("/:code/player/give_up", giveUp);
+
+/**
+ * @route GET /rooms/:code/last_card
+ * @description Ottiene l'ultima carta giocata in una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */
+router.get("/:code/last_card", getLastCard);
 
 export default router;

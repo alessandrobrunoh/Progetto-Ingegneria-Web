@@ -47,8 +47,6 @@ const playCard = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    console.log('Play card response:', response.data);
-    notification.send("Card played successfully", "success");
     emits('playCard', response.data); // Emetti l'evento con i dati della carta giocata
     return response.data;
   } catch (error) {
@@ -70,8 +68,6 @@ const passTurn = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    console.log('Pass turn response:', response.data);
-    notification.send("Turn passed successfully", "success");
     emits('passTurn', response.data); // Emetti l'evento con i dati del turno passato
     return response.data;
   } catch (error) {

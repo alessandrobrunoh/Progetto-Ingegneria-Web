@@ -3,28 +3,78 @@ import { notification } from "@/assets/js/notificationEvent.js";
 import STATSBOX from "@/pages/components/statsBox.vue";
 import BUTTON from "@/pages/components/Button.vue";
 import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 const router = useRouter();
+const avatar = ref("");
+const player_id = ref(null);
 
 const logout = () => {
-  localStorage.removeItem('token'); // Remove the token from localStorage
-  router.push('/sign-in'); // Redirect to the login page
-};
+  notification.send("Logout successful", "success");
+  localStorage.removeItem('token');
+  router.push('/');
+}
+
+const getUserID = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Authorization token is missing");
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user ID:", error);
+  }
+}
+
+const getUser = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Authorization token is missing");
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    avatar.value = response.data.avatar;
+    theme.value = response.data.theme;
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+  }
+}
+
+onMounted(async () => {
+  player_id.value = await getUserID();
+  await getUser();
+});
 </script>
 
 <template>
   <section class="profile-container">
     <!-- <i class="fe-log-out logout-icon" @click="logout"></i> -->
-    <img src="@/assets/img/avatars/Avatar-0.svg" alt="Profile Avatar" />
+    <img :src="`../assets/img/avatars/${avatar}.svg`" alt="Profile Avatar" />
     <section class="statistics-container">
-      <STATSBOX type="wins">Games Wins</STATSBOX>
-      <STATSBOX type="loses">Games Loses</STATSBOX>
-      <STATSBOX type="best">Best Points</STATSBOX>
+      <STATSBOX type="wins" :value="game_win">Games Wins</STATSBOX>
+      <STATSBOX type="loses" :value="game_lost">Games Loses</STATSBOX>
+      <STATSBOX type="best" :value="best_points">Best Points</STATSBOX>
     </section>
   </section>
   <footer>
     <BUTTON color="primary"><router-link to="/profile/settings">SETTINGS</router-link></BUTTON>
-    <BUTTON color="danger"><router-link to="/">CLOSE</router-link></BUTTON>
+    <BUTTON color="danger" @click="logout"><router-link to="/">LOGOUT</router-link></BUTTON>
   </footer>
 </template>
 

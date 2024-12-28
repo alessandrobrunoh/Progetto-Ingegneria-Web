@@ -4,6 +4,7 @@ import { generateCode, isCodeUnique } from "../utils/codeRoom";
 import { getUserIdFromToken } from "../utils/getIdByToken";
 import { debugPrint } from "../utils/debugPrint";
 import { generateDeck } from "../utils/generateDeck";
+import { checkWinner } from "../utils/checkWinner";
 
 /**
  * Recupera tutte le stanze dal database e le invia come risposta JSON.
@@ -335,48 +336,61 @@ export const deleteRoom = async (req: Request, res: Response) => {
  * @throws Restituisce un errore 500 se si verifica un problema durante l'inserimento del giocatore nella stanza.
  */
 export const joinRoom = async (req: Request, res: Response) => {
+  const { code } = req.params;
   const token = req.headers.authorization?.split(" ")[1];
+
   if (!token) {
-    debugPrint("Authorization token is missing");
     return res.status(401).send("Authorization token is missing");
   }
 
-  const user_id = getUserIdFromToken(token);
-  if (!user_id) {
-    debugPrint("Invalid or expired token");
+  const player_id = getUserIdFromToken(token);
+  if (!player_id) {
     return res.status(401).send("Invalid or expired token");
   }
-
-  const { code } = req.params;
 
   try {
     const connection = await connect();
 
-    // ? Controlla il numero di giocatori nella stanza
-    const [rows] = await connection.execute(
-      "SELECT COUNT(*) as playerCount FROM players WHERE room_code = ?",
+    // Controlla se la stanza esiste
+    const [room]: any = await connection.execute(
+      "SELECT * FROM rooms WHERE code = ?",
       [code]
     );
-    const playerCount = rows[0].playerCount;
+    if (room.length === 0) {
+      return res.status(404).send("Room not found");
+    }
 
-    // ? Alterna i team
-    const team = playerCount % 2 === 0 ? 1 : 2;
+    // Controlla il numero di giocatori nella stanza
+    const [players]: any = await connection.execute(
+      "SELECT user_id, team FROM players WHERE room_code = ?",
+      [code]
+    );
+    if (players.length >= 4) {
+      await connection.execute(
+        "UPDATE rooms SET status = 'full' WHERE code = ?",
+        [code]
+      );
+      return res.status(403).send("Room is full");
+    }
 
+    // Assegna il giocatore a un team in modo bilanciato
+    let team = 1;
+    const team1Count = players.filter((p: any) => p.team === 1).length;
+    const team2Count = players.filter((p: any) => p.team === 2).length;
+    if (team1Count > team2Count) {
+      team = 2;
+    }
+
+    // Aggiungi il giocatore alla stanza
     await connection.execute(
-      "INSERT INTO players (room_code, user_id, team, host) VALUES (?, ?, ?, ?)",
-      [code, user_id, team, 0]
+      "INSERT INTO players (user_id, room_code, team) VALUES (?, ?, ?)",
+      [player_id, code, team]
     );
 
-    debugPrint(
-      `Player with ID: ${user_id} joined room with CODE: ${code} in team ${team}`
-    );
-    res.send("Player joined room");
+    res.send("Joined room successfully");
   } catch (error) {
-    debugPrint(
-      `Error occurred while player with ID: ${user_id} tried to join room with CODE: ${code}`
-    );
-    console.error("Error details:", error);
-    res.status(500).send("An error occurred");
+    console.error('Error joining room:', error);
+    res.status(500).send('Error joining room');
   }
 };
 
@@ -409,10 +423,34 @@ export const leaveRoom = async (req: Request, res: Response) => {
 
   try {
     const connection = await connect();
+
+    // Controlla se l'utente è l'host
+    const [hostCheck]: any = await connection.execute(
+      "SELECT host FROM players WHERE room_code = ? AND user_id = ?",
+      [code, user_id]
+    );
+
+    // Rimuovi l'utente dalla stanza
     await connection.execute(
       "DELETE FROM players WHERE room_code = ? AND user_id = ?",
       [code, user_id]
     );
+
+    // Se l'utente era l'host, assegna un nuovo host
+    if (hostCheck.length > 0 && hostCheck[0].host === 1) {
+      const [newHost]: any = await connection.execute(
+        "SELECT user_id FROM players WHERE room_code = ? LIMIT 1",
+        [code]
+      );
+
+      if (newHost.length > 0) {
+        await connection.execute(
+          "UPDATE players SET host = 1 WHERE room_code = ? AND user_id = ?",
+          [code, newHost[0].user_id]
+        );
+        debugPrint(`New host with ID: ${newHost[0].user_id} assigned for room with CODE: ${code}`);
+      }
+    }
 
     debugPrint(`Player with ID: ${user_id} left room with CODE: ${code}`);
     res.send("Player left room");
@@ -583,6 +621,58 @@ export const passTurn = async (req: Request, res: Response) => {
   try {
     const connection = await connect();
 
+    const [players]: any = await connection.execute(
+      "SELECT user_id FROM players WHERE room_code = ?",
+      [code]
+    );
+
+    const [deck]: any = await connection.execute(
+      "SELECT * FROM deck WHERE room_code = ?",
+      [code]
+    );
+    const lastCard = deck[deck.length - 1];
+
+    const [table]: any = await connection.execute(
+      "SELECT * FROM table_cards WHERE room_code = ?",
+      [code]
+    );
+
+    if (table.length === players.length) {
+      console.log("There are cards == players on the table");
+      // ? Controlla la prima carta sul tavolo ()
+      let points = 0;
+
+      console.log(`Last card: ${lastCard.number}/${lastCard.seed}`);
+      console.log(`First card: ${table[0].number}/${table[0].seed}`);
+      console.log(`Cards on the table: ${table.length}`);
+      console.log(`Table: ${table}`);
+      for (let i = 0; i < table.length; i++) {
+        const winner = checkWinner(
+          lastCard.seed,
+          table[0].number,
+          table[0].seed,
+          table[i].number, // Corretto l'indice
+          table[i].seed   // Corretto l'indice
+        );
+
+        if (typeof winner === "object" && winner.player === "first") {
+          points += winner.value;
+          await connection.execute(
+            "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
+            [points, table[0].player_id, code]
+          );
+        } else if (typeof winner === "object") {
+          points += winner.value;
+          await connection.execute(
+            "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
+            [points, table[1].player_id, code]
+          );
+        }
+      }
+      await connection.execute("DELETE FROM table_cards WHERE room_code = ?", [code]);
+    }
+
+    
     const [rows]: any = await connection.execute(
       "SELECT user_id FROM players WHERE room_code = ?",
       [code]
@@ -599,7 +689,7 @@ export const passTurn = async (req: Request, res: Response) => {
       return res.status(404).send("Room not found");
     }
 
-    if(turnPlayerResult === player_id) {
+    if (turnPlayerResult === player_id) {
       return res.status(403).send("It's not your turn");
     }
 
@@ -629,7 +719,9 @@ export const passTurn = async (req: Request, res: Response) => {
     console.log(`Turn passed for room with CODE: ${code}`);
     res.send("Turn passed");
   } catch (error) {
-    console.error(`Error occurred while passing turn for room with CODE: ${code}`);
+    console.error(
+      `Error occurred while passing turn for room with CODE: ${code}`
+    );
     console.error("Error details:", error);
     res.status(500).send("An error occurred");
   }
@@ -685,6 +777,26 @@ export const drawCard = async (req: Request, res: Response) => {
     return res.status(500).send("An error occurred");
   }
 };
+
+export const getLastCard = async (req: Request, res: Response) => {
+  const { code } = req.params;
+  try {
+    const connection = await connect();
+    const [rows]: any = await connection.execute(
+      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 1",
+      [code]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).send("No cards left in the deck");
+    }
+
+    return res.send(rows[0]);
+  } catch (error) {
+    console.error("Error getting last card:", error);
+    return res.status(500).send("An error occurred");
+  }
+}
 
 export const giveUp = async (req: Request, res: Response) => {
   const token = req.headers.authorization?.split(" ")[1];

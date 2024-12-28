@@ -13,7 +13,9 @@ const showNotification = notification.showNotification;
 const notificationMessage = notification.notificationMessage;
 const notificationColor = notification.notificationColor;
 const player_id = ref(null);
-const theme = ref('light');
+const theme = ref('Old Style');
+const avatar = ref(0);
+const briscola = ref(null);
 
 const checkAuth = async () => {
   const token = localStorage.getItem('token');
@@ -21,6 +23,25 @@ const checkAuth = async () => {
   if (!isAuthenticated.value) {
     router.push('/sign-in');
     return;
+  }
+};
+
+const getLastCard = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error('Authorization token is missing');
+    return;
+  }
+
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/last_card`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data.seed;
+  } catch (error) {
+    console.error('Error fetching last card:', error);
   }
 };
 
@@ -96,34 +117,33 @@ const getUserID = async () => {
   }
 };
 
-const getTheme = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
+const getUser = async () => {
+  const token = localStorage.getItem("token");
 
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}/`, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
+    avatar.value = response.data.avatar;
     document.body.setAttribute('theme', response.data.theme);
+    return response.data;
   } catch (error) {
-    console.error('Error fetching theme:', error);
+    console.error("Error fetching user data:", error);
   }
-};
+}
 
 onMounted(async () => {
-  await checkAuth();
   player_id.value = await getUserID();
-  await getTheme();
+  await checkAuth();
+  await getUser();
+  briscola.value = await getLastCard();
 });
 
 onUpdated(async () => {
   await checkAuth();
-  await isInGame();
+  //await isInGame();
 });
 </script>
 
@@ -132,11 +152,15 @@ onUpdated(async () => {
     {{ notificationMessage }}
   </NOTIFICATION>
   <section v-if="isAuthenticated" class="profile-icon-container">
-    <router-link to="/"><img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389"
+    <router-link to="/" v-if="!isGameRoute()"><img
+        src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389"
         alt="Vue logo" /></router-link>
+    <!-- <img v-if="isGameRoute()" class="briscola" -->
+      <!-- src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" /> -->
+       <span v-if="isGameRoute()">Briscola: {{ briscola }}</span>
     <BUTTON v-if="isGameRoute()" @click="giveUp" color="danger">GIVE UP</BUTTON>
     <router-link to="/profile">
-      <img alt="Avatar Profile" src="@/assets/img/avatars/Avatar-0.svg" />
+      <img alt="Avatar Profile" :src="`../assets/img/avatars/${avatar}.svg`" />
     </router-link>
   </section>
   <main :theme="theme">
@@ -166,6 +190,10 @@ img {
   height: auto;
   cursor: pointer;
   border-radius: 50%;
+}
+
+img.briscola {
+  cursor: default !important;
 }
 
 img:active {

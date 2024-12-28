@@ -53,9 +53,9 @@ const getRoom = async () => {
       notification.send("Game not started", "danger");
       return router.push('/');
     }
-    turn_player_id.value = response.data.turn_player_id;
     return response.data;
   } catch (error) {
+    notification.send("Game not found", "danger");
     router.push('/');
     console.error('Error fetching room code:', error);
   }
@@ -202,42 +202,42 @@ const updateGameTable = async (card) => {
   table_cards.value.push(card);
   player_hand.value = await getPlayerHand();
   socket.value.emit('playCard', route.params.code, player_id.value);
-  // playSound('card');
-  card_disabled.value = !card_disabled.value;
+  card_disabled.value = true;
+  await updateTurnInfo();
 };
 
 const updateTurnInfo = async () => {
+  table_cards.value = await getGameTable();
+  turn_player_id.value = await getRoom();
+  turn_player_id.value = turn_player_id.value.turn_player_id;
+  player_hand.value = await getPlayerHand();
   if (player_id.value == turn_player_id.value) {
+    card_disabled.value = false;
     turn_player_name.value = "Your";
-    card_disabled.value = !card_disabled.value;
   } else {
     turn_player_name.value = await getUserName(turn_player_id.value) + "'s";
-    card_disabled.value = !card_disabled.value;
   }
-  console.log(card_disabled.value);
 };
 
 onMounted(async () => {
+  turn_player_id.value = await getRoom();
+  turn_player_id.value = turn_player_id.value.turn_player_id;
   player_id.value = await getUserID();
-  table_cards.value = await getGameTable();
-  player_hand.value = await getPlayerHand();
+  await updateTurnInfo();
 
   socket.value = io(`http://${window.location.hostname}:8000`);
 
   // Everyone joins the game to receive the game events
   socket.value.emit('joinGame', route.params.code);
 
-  updateTurnInfo();
 
   socket.value.on('turnPassed', async (player_id) => {
-    turn_player_id.value = player_id;
-    updateTurnInfo();
-    player_hand.value = await getPlayerHand();
+    await drawCard();
+    await updateTurnInfo(); 
   });
 
   socket.value.on('cardPlayed', async (player_id) => {
-    card_disabled.value = !card_disabled.value;
-    table_cards.value = await getGameTable();
+    await updateTurnInfo();
     socket.value.emit('passTurn', route.params.code, player_id);
   });
 });
@@ -254,10 +254,13 @@ onUnmounted(async () => {
     </header>
     <section class="game-table-container">
       <CARD v-for="card in table_cards" :number="card.number" :seed="card.seed" disabled></CARD>
+      <!-- <img v-for="card in table_cards" :src="`/assets/img/cards/${card.number}_${card.seed}.png`" :alt="`Card ${card.number} of ${card.seed}`" class="card-image" :key="card.id" /> -->
     </section>
     <footer>
       <section class="players-cards">
-        <CARD v-for="card in player_hand" :number="card.number" :seed="card.seed" :disabled="card_disabled" @playCard="updateGameTable"></CARD>
+        <CARD v-for="card in player_hand" :number="card.number" :seed="card.seed" :disabled="card_disabled"
+          @playCard="updateGameTable"></CARD>
+        <!-- <img v-for="card in player_hand" :src="`/assets/img/cards/${card.number}_${card.seed}.png`" :alt="`Card ${card.number} of ${card.seed}`" class="card-image" :key="card.id" :disabled="card_disabled" @click="updateGameTable(card)" /> -->
       </section>
     </footer>
   </section>

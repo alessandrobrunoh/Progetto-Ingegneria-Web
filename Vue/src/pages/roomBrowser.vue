@@ -29,14 +29,6 @@ const getRooms = async () => {
     }
 };
 
-const filterRooms = () => {
-    if (showWaitingOnly.value) {
-        filteredRooms.value = rooms.value.filter(room => room.status === 'waiting');
-    } else {
-        filteredRooms.value = rooms.value;
-    }
-};
-
 // Funzione per ottenere tutte le stanze e i giocatori
 const getRoomsPlayers = async (code) => {
     try {
@@ -82,18 +74,15 @@ const checkAndDeleteEmptyRooms = async () => {
 const refreshRooms = async () => {
     await checkAndDeleteEmptyRooms();
     rooms.value = await getRooms();
-    filterRooms();
 };
 
 // Esegui il controllo delle stanze vuote al montaggio del componente
 onMounted(async () => {
     await checkAndDeleteEmptyRooms();
     rooms.value = await getRooms();
-    filterRooms();
     setInterval(async () => {
         await checkAndDeleteEmptyRooms();
         rooms.value = await getRooms();
-        filterRooms();
     }, 10000);
 });
 </script>
@@ -107,7 +96,7 @@ onMounted(async () => {
             </BUTTON>
         </div>
         <ul>
-            <BROWSEBOX v-for="room in filteredRooms" :key="room.code" :code="room.code" :status="room.status" />
+            <BROWSEBOX v-for="room in rooms" :key="room.code" :code="room.code" :status="room.status" />
         </ul>
     </section>
 </template>

@@ -44,14 +44,17 @@ const statusClass = computed(() => {
     return {
         'status-waiting': props.status === 'waiting',
         'status-in-progress': props.status === 'in_progress',
+        'status-full': props.status === 'full',
         'status-ended': props.status === 'ended'
     };
 });
 
 const isDisabled = computed(() => {
-    return props.status === 'in_progress' || props.status === 'ended';
+    return props.status === 'in_progress' || props.status === 'ended' || props.status === 'full';
 });
 </script>
+
+// @todo anche se é disabled mi fa comunque la richiesta HTTTP all'api cosa che non deve brutto stronzo
 
 <template>
     <li :class="['room-item', statusClass]" @click="joinRoom(code)" v-bind:disabled="isDisabled || null" @mouseover="showTooltip" @mouseleave="hideTooltip">
@@ -136,12 +139,12 @@ room-info {
     color: var(--secondary-color);
 }
 
-.status-bookmark {
-    font-weight: normal; /* Cambia il peso del font per renderlo meno in grassetto */
-}
-
 .status-waiting {
     background-color: var(--success-color);
+}
+
+.status-full {
+    background-color: var(--gold-color);
 }
 
 .status-in-progress {

@@ -38,7 +38,7 @@ const getRoom = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    if(response.data === "Logged out successfully") {
+    if (response.data === "Logged out successfully") {
       localStorage.removeItem('token');
       return router.push('/');
     }
@@ -69,10 +69,28 @@ const getPlayers = async () => {
         'Authorization': `Bearer ${token}`
       }
     });
-    const data = response.data;
-    players.value = data;
+    players.value = response.data;
+    console.log("AAAA", players.value);
+    await getPlayersAvatars();
   } catch (error) {
     console.error('Error fetching players:', error);
+  }
+};
+
+const getPlayersAvatars = async () => {
+  try {
+    for (const player of players.value) {
+      const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player.user_id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      player.avatar = response.data.avatar;
+      console.log("BBBB", player.avatar);
+      console.log("CCCC", players.value);
+    }
+  } catch (error) {
+    console.error('Error fetching player avatars:', error);
   }
 };
 
@@ -95,8 +113,7 @@ const getUser = async (playerId) => {
         'Authorization': `Bearer ${token}`
       }
     });
-    const data = response.data;
-    return data.username;
+    return response.data.username;
   } catch (error) {
     console.error('Error fetching user:', error);
     return null;
@@ -226,7 +243,7 @@ const startGame = async () => {
     socket.value.emit('startGame', code.value);
   } catch (error) {
     console.error('Error starting game:', error);
-  } 
+  }
 };
 
 /**
@@ -290,13 +307,14 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   // Chiudi la connessione WebSocket quando il componente viene smontato
-  if(!isGameStarted.value) {
+  if (!isGameStarted.value) {
     console.log(isGameStarted.value);
     await leaveRoom();
   }
-  
+
   if (socket) {
     socket.value.emit('leaveRoom', code.value, players.value[0].name);
+    await isPlayerHost();
   }
 
   if (players.value.length === 0 && !isGameStarted.value) {
@@ -313,14 +331,14 @@ onUnmounted(async () => {
         <h2>Squadra 1</h2>
         <section class="team-container">
           <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 1)" :key="index" color="success"
-            :host="player.host">{{ player?.name }}</TEAMBOX>
+            :avatar="player.avatar" :host="player.host">{{ player?.name }}</TEAMBOX>
         </section>
       </section>
       <section v-if="players.filter(p => p?.team === 2).length > 0">
         <h2>Squadra 2</h2>
         <section class="team-container">
           <TEAMBOX v-for="(player, index) in players.filter(p => p?.team === 2)" :key="index" color="success"
-            :host="player.host">{{ player?.name }}</TEAMBOX>
+            :avatar="player.avatar" :host="player.host">{{ player?.name }}</TEAMBOX>
         </section>
       </section>
     </section>
@@ -329,8 +347,8 @@ onUnmounted(async () => {
     <BUTTON v-if="isHost" @click="startGame" :color="getButtonColor()">START GAME</BUTTON>
   </footer>
   <div v-if="countdown >= 0" class="countdown-overlay">
-      <div class="countdown-text">{{ countdown > 0 ? countdown : 'Good Luck' }}</div>
-    </div>
+    <div class="countdown-text">{{ countdown > 0 ? countdown : 'Good Luck' }}</div>
+  </div>
 </template>
 
 <style scoped>

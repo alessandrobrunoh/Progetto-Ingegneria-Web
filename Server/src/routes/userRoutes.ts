@@ -4,7 +4,7 @@ const router = express.Router();
 import { checkAuth } from "../controllers/authController";
 router.use(checkAuth);
 
-import { getUser, getUserId } from "../controllers/userController";
+import { getUser, getUserId, saveProfile } from "../controllers/userController";
 
 /**
  * @route GET /user
@@ -19,5 +19,12 @@ router.get("/", getUserId);
  * @access Private
  */
 router.get("/:id", getUser);
+
+/**
+ * @route POST /user/profile/:username/:email/:password/:theme/:avatar
+ * @description Salva il profilo dell'utente.
+ * @access Private
+ */
+router.post("/profile/:username/:email/:password/:theme/:avatar/save", saveProfile);
 
 export default router;
