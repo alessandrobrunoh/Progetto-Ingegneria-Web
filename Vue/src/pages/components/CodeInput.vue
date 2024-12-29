@@ -4,12 +4,20 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { notification } from '@/assets/js/notificationEvent';
 import { playSound } from '../../assets/js/playSound';
+import Cookies from 'js-cookie';
 
 const code = ref('');
 const router = useRouter();
 
+const music = Cookies.get('music');
+if (!music) {
+  Cookies.set('music', true);
+}
+
 const joinRoom = async () => {
-  playSound('btn_click');
+  if(music) {
+    playSound('btn_click');
+  }
   const token = localStorage.getItem('token');
   if (!token) {
     notification.send('You must be logged in to join a room', 'danger');
@@ -20,7 +28,7 @@ const joinRoom = async () => {
     // Verifica se il codice della stanza esiste
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
 
@@ -28,19 +36,25 @@ const joinRoom = async () => {
       // Se il codice esiste, procedi con il join
       const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${code.value}/join`, {}, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'authorization': `Bearer ${token}`
         }
       });
-      playSound('success');
+      if(music) {
+        playSound('success');
+      }
       notification.send('Room joined successfully', 'success');
       router.push(`/room/${code.value}`);
     } else {
       // Se il codice non esiste, mostra una notifica di errore
-      playSound('danger');
+      if(music) {
+        playSound('wrong');
+      }
       notification.send('Room code does not exist', 'danger');
     }
   } catch (error) {
-    playSound('danger');
+    if(music) {
+      playSound('wrong');
+    }
     notification.send('The room code is invalid', 'danger');
   }
 };

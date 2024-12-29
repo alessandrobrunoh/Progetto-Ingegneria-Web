@@ -127,8 +127,8 @@ export const register = async (req: Request, res: Response) => {
  *         Restituirà un codice di stato 500 se la chiave segreta JWT non è definita o si verifica un errore durante l'elaborazione.
  */
 export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(" ")[1];
   try {
-    const token = req.headers.authorization?.split(" ")[1];
     if (!token || token === '') {
       console.log("Authorization token is missing or empty");
       return res.status(401).send("Unauthorized");

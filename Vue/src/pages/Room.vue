@@ -7,7 +7,8 @@ import INVITECODE from './components/InviteCode.vue';
 import TEAMBOX from './components/TeamBox.vue';
 import BUTTON from './components/Button.vue';
 import { notification } from '../assets/js/notificationEvent';
-import { playSound } from '../assets/js/playSound';
+import { playSound, stopSound, stopAllSounds } from '../assets/js/playSound';
+import Cookies from 'js-cookie';
 
 const route = useRoute();
 const router = useRouter();
@@ -17,6 +18,11 @@ const isGameStarted = ref(false);
 const countdown = ref(-1);
 const isHost = ref(false);
 const socket = ref(io(`http://${window.location.hostname}:8000`));
+
+const cookies = Cookies.get('music');
+if (!cookies) {
+  Cookies.set('music', true);
+}
 
 /**
  * Ottiene il codice della stanza dalla API.
@@ -35,7 +41,7 @@ const getRoom = async () => {
     // Effettua la richiesta API utilizzando il token nell'header di autorizzazione
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     if (response.data === "Logged out successfully") {
@@ -66,11 +72,10 @@ const getPlayers = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/players`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     players.value = response.data;
-    console.log("AAAA", players.value);
     await getPlayersAvatars();
   } catch (error) {
     console.error('Error fetching players:', error);
@@ -86,8 +91,6 @@ const getPlayersAvatars = async () => {
         }
       });
       player.avatar = response.data.avatar;
-      console.log("BBBB", player.avatar);
-      console.log("CCCC", players.value);
     }
   } catch (error) {
     console.error('Error fetching player avatars:', error);
@@ -110,7 +113,7 @@ const getUser = async (playerId) => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${playerId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     return response.data.username;
@@ -133,7 +136,7 @@ const leaveRoom = async () => {
   try {
     await axios.delete(`http://${window.location.hostname}:8000/api/room/${code.value}/leave`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
   } catch (error) {
@@ -155,7 +158,7 @@ const deleteRoom = async () => {
   try {
     await axios.delete(`http://${window.location.hostname}:8000/api/room/${code.value}/delete`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
   } catch (error) {
@@ -176,7 +179,7 @@ const isUserInRoom = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/player/in_room`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     return response.data;
@@ -199,7 +202,7 @@ const isPlayerHost = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code.value}/player/is_host`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     isHost.value = response.data;
@@ -212,9 +215,10 @@ const isPlayerHost = async () => {
  * Avvia il gioco in modo asincrono.
  */
 const startGame = async () => {
-  console.log(players.value.length);
   if (players.value.length !== 2 && players.value.length !== 4) {
-    playSound("danger");
+    if(cookies === "true") { 
+      playSound("wrong");
+    }
     notification.send('Devi avere almeno 2 o 4 giocatori per iniziare il gioco', "danger");
     return;
   }
@@ -227,11 +231,13 @@ const startGame = async () => {
   try {
     await axios.post(`http://${window.location.hostname}:8000/api/room/${code.value}/start`, {}, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     countdown.value = 3;
-    playSound("countdown");
+    if(cookies === "true") {
+      playSound("countdown");
+    }
     const interval = setInterval(() => {
       countdown.value--;
       if (countdown.value === 0) {
@@ -274,6 +280,10 @@ onMounted(async () => {
     return;
   }
 
+  if(cookies === "true") {
+    playSound("waiting", true);
+  }
+
   await getRoom();
   await getPlayers();
   await updatePlayerNames();
@@ -293,7 +303,9 @@ onMounted(async () => {
 
   socket.value.on('gameStarted', async () => {
     countdown.value = 3;
-    playSound("countdown");
+    if(cookies === "true") {
+      playSound("countdown");
+    }
     const interval = setInterval(() => {
       countdown.value--;
       if (countdown.value === 0) {
@@ -306,9 +318,9 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
+  stopSound("waiting");
   // Chiudi la connessione WebSocket quando il componente viene smontato
   if (!isGameStarted.value) {
-    console.log(isGameStarted.value);
     await leaveRoom();
   }
 

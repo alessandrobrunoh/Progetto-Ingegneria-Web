@@ -25,6 +25,6 @@ router.get("/:id", getUser);
  * @description Salva il profilo dell'utente.
  * @access Private
  */
-router.post("/profile/:username/:email/:password/:theme/:avatar/save", saveProfile);
+router.post("/profile/:username/:email/:password/:theme/:avatar/:cards/:music/save", saveProfile);
 
 export default router;

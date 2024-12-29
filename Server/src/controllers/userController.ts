@@ -42,7 +42,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     const connection = await connect();
     const sql =
-      "SELECT username, email, total_games, games_win, best_points, avatar, theme FROM users WHERE id = ?";
+      "SELECT username, email, total_games, games_win, best_points, avatar, theme, cards, music FROM users WHERE id = ?";
     const [rows]: any = await connection.execute(sql, [id]);
     if (rows.length === 0) {
       return res.status(404).send("User not found");
@@ -77,23 +77,23 @@ export const getUser = async (req: Request, res: Response) => {
  * @throws {500} Se si verifica un errore durante l'aggiornamento del profilo.
  */
 export const saveProfile = async (req: Request, res: Response) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).send("Authorization token is required");
+  }
+
+  const user_id = getUserIdFromToken(token);
+  if (!user_id) {
+    return res.status(401).send("Invalid token");
+  }
+
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).send("Authorization token is required");
-    }
-
-    const user_id = getUserIdFromToken(token);
-    if (!user_id) {
-      return res.status(401).send("Invalid token");
-    }
-
-    const { username, email, password, avatar, theme } = req.params;
+    let { username, email, password, avatar, theme, cards, music } = req.params;
     if (!username || !email || !avatar || !theme) {
       return res.status(400).send("Username, email, avatar and theme are required");
     }
 
-    // Controlla il formato dell'email
+    // ? Controlla il formato dell'email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).send("Invalid email format");
@@ -101,7 +101,7 @@ export const saveProfile = async (req: Request, res: Response) => {
 
     const connection = await connect();
 
-    // Controlla se il nome utente è già utilizzato
+    // ? Controlla se il nome utente è già utilizzato
     const [existingUser]: any = await connection.execute(
       "SELECT id FROM users WHERE username = ? AND id != ?",
       [username, user_id]
@@ -110,11 +110,27 @@ export const saveProfile = async (req: Request, res: Response) => {
       return res.status(400).send("Username is already taken");
     }
 
-    const sql =
-      "UPDATE users SET username = ?, email = ?, avatar = ?, theme = ? WHERE id = ?";
-    await connection.execute(sql, [username, email, avatar, theme, user_id]);
+    // ? Controlla se l'email è già utilizzata
+    const [existingEmail]: any = await connection.execute(
+      "SELECT id FROM users WHERE email = ? AND id != ?",
+      [email, user_id]
+    );
+    if (existingEmail.length > 0) {
+      return res.status(400).send("Email is already taken");
+    }
 
-    if (password !== undefined) {
+    if (music === "true") {
+      music = 1;
+    } else {
+      music = 0;
+    }
+
+    const sql =
+      "UPDATE users SET username = ?, email = ?, avatar = ?, theme = ?, cards = ?, music = ? WHERE id = ?";
+    await connection.execute(sql, [username, email, avatar, theme, cards, music, user_id]);
+
+    if (password !== "undefined") {
+      console.log("Password: ", password);
       if (password.length < 8) {
         return res.status(400).send("Password must be at least 8 characters long");
       }

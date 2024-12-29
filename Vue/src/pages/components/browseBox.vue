@@ -30,11 +30,10 @@ const joinRoom = async (codes) => {
     try {
         const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${codes}/join`, {}, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'authorization': `Bearer ${token}`
         }
       });
-        console.log('Join room response:', response.data);  
-        router.push(`/room/${codes}`);
+        return router.push(`/room/${codes}`);
     } catch (error) {
         console.error('Error joining room:', error);
     }

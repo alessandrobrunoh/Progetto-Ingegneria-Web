@@ -38,7 +38,7 @@ const getRoom = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
 
@@ -79,7 +79,7 @@ const isPlayerInRoom = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/in_room`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
 
@@ -105,7 +105,7 @@ const getUserName = async (player_id) => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     return response.data.username.charAt(0).toUpperCase() + response.data.username.slice(1);
@@ -125,7 +125,7 @@ const getGameTable = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/table`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     table_cards.value = response.data;
@@ -145,7 +145,7 @@ const getPlayerHand = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/${player_id.value}/hand`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     if (response.data.length == 0) {
@@ -169,7 +169,7 @@ const drawCard = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/draw`, {}, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     player_hand.value.push(response.data);
@@ -189,7 +189,7 @@ const getUserID = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     return response.data;

@@ -2,6 +2,8 @@
 import { notification } from "@/assets/js/notificationEvent.js";
 import { useRouter } from 'vue-router';
 import { toRefs } from 'vue';
+import { playSound } from "../../assets/js/playSound";
+import Cookies from 'js-cookie';
 
 const props = defineProps({
   placeholder: {
@@ -11,6 +13,11 @@ const props = defineProps({
 
 const { placeholder } = toRefs(props);
 const router = useRouter();
+
+const cookies = Cookies.get('music');
+if (!cookies) {
+  Cookies.set('music', true);
+}
 
 const shareCode = () => {
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -29,6 +36,9 @@ const shareCode = () => {
     textarea.select();
     try {
       document.execCommand('copy');
+      if(cookies === "true") {
+        playSound("btn_click");
+      }
       notification.send("Code copied to clipboard", "success");
     } catch (err) {
       console.error('Failed to copy: ', err);

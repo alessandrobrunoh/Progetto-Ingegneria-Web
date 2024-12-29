@@ -1,6 +1,18 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
 import { playSound } from "../../assets/js/playSound";
+import Cookies from 'js-cookie';
+
+const sounds = () => {
+  const cookies = Cookies.get('music');
+  if (!cookies) {
+    Cookies.set('music', true);
+  }
+
+  if(cookies === "true") {
+    playSound('btn_click');
+  }
+}
 </script>
 
 <script>
@@ -16,7 +28,7 @@ export default {
 </script>
 
 <template>
-  <button :color="color" @click="playSound('btn_click')">
+  <button :color="color" @click="sounds()">
     <slot></slot>
   </button>
 </template>

@@ -18,7 +18,7 @@ export default {
 
 <template>
   <button :color="color">
-    <img :src="`../assets/img/avatars/${avatar}.svg`" alt="Avatar Profile"/>
+    <img :src="`../assets/img/avatars/${avatar}.svg`" alt="Avatar Profile" />
     <slot></slot>
     <i v-if="host" class="cm-crown"></i>
   </button>
@@ -64,5 +64,4 @@ button[color="success"] {
 button[color="danger"] {
   background-color: var(--danger-color);
 }
-
 </style>

@@ -1,6 +1,6 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import BUTTON from "@/pages/components/Button.vue";
 import CODEINPUT from "@/pages/components/CodeInput.vue";
 import { useRouter } from 'vue-router';

@@ -46,33 +46,24 @@ export const checkWinner = (b_seed: String, f_number: number, f_seed: String, p_
       break;
   }
 
-  console.log("CHECK: ", p_value + "/" + f_value);
-
   if (p_seed === f_seed) {
     if (p_value > f_value) {
       //   return { seed: p_seed, value: p_value, number: p_number };
-      console.log("A");
       return { player: "player", value: p_value + f_value };
     } else if (p_value < f_value) {
-      console.log("B");
       return { player: "first", value: p_value + f_value };
     } else {
       if (p_number > f_number) {
-        console.log("C");
         return { player: "player", value: p_value + f_value };
       } else {
-        console.log("D");
         return { player: "first", value: p_value + f_value };
       }
     }
   } else {
     if (p_seed === b_seed && f_seed !== b_seed) {
-      console.log("E");
       return { player: "player", value: p_value + f_value };
     } else if(p_seed !== b_seed && f_seed === b_seed) {
-      console.log("F");
       return { player: "first", value: p_value + f_value };
     }
   }
-  console.log("G");
 }

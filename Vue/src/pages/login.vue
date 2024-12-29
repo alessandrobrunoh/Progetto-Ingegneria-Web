@@ -6,10 +6,16 @@ import { ref } from "vue";
 import { useRouter } from 'vue-router';
 import { notification } from "../assets/js/notificationEvent.js";
 import { playSound } from "../assets/js/playSound.js";
+import Cookies from 'js-cookie';
 
 const username = ref('');
 const password = ref('');
 const router = useRouter();
+
+const music = Cookies.get('music');
+if (!music) {
+  music = false;
+}
 
 const isAuthenticated = () => {
   return !!localStorage.getItem('token');
@@ -19,6 +25,12 @@ if (isAuthenticated()) {
   router.push('/');
 }
 
+const handleKeyPress = (event) => {
+  if (event.key === 'Enter') {
+    handleSignIn();
+  }
+};
+
 const handleSignIn = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/auth/login`, {
@@ -27,7 +39,10 @@ const handleSignIn = async () => {
     });
     if (response.data.token) {
       localStorage.setItem('token', response.data.token); // Store token
-      playSound('success');
+
+      if (music) {
+        playSound('success');
+      }
       notification.send('Logged in successfully', 'success');
       router.push('/');
     } else {
@@ -35,7 +50,9 @@ const handleSignIn = async () => {
     }
   } catch (error) {
     if (error.response && error.response.data) {
-      playSound('danger');
+      if (music) {
+        playSound('wrong');
+      }
       notification.send('Invalid username or password', 'danger');
     }
   }
@@ -46,8 +63,8 @@ const handleSignIn = async () => {
   <section class="auth-container">
     <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo" />
     <section class="input-container">
-      <INPUT v-model="username" placeholder="Username" type="username" />
-      <INPUT v-model="password" placeholder="Password" type="password" />
+      <INPUT v-model="username" placeholder="Username" type="username" @keypress="handleKeyPress" />
+      <INPUT v-model="password" placeholder="Password" type="password" @keypress="handleKeyPress" />
     </section>
     <BUTTON @click="handleSignIn">SIGN IN</BUTTON>
     <p>

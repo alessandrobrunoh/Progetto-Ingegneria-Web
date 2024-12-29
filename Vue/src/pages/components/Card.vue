@@ -44,7 +44,7 @@ const playCard = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/play/${props.number}/${props.seed}`, {}, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     emits('playCard', response.data); // Emetti l'evento con i dati della carta giocata
@@ -65,7 +65,7 @@ const passTurn = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/pass`, {}, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     emits('passTurn', response.data); // Emetti l'evento con i dati del turno passato

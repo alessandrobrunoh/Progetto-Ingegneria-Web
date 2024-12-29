@@ -6,14 +6,17 @@ import axios from "axios";
 import { ref } from "vue";
 import { useRouter } from 'vue-router';
 import { playSound } from "../assets/js/playSound";
+import Cookies from 'js-cookie';
 
 const username = ref('');
 const email = ref('');
 const password = ref('');
 const c_password = ref('');
 
-
-// @audit-issue non è necessario fare un controllo di validazione per la password
+const music = Cookies.get('music');
+if (!music) {
+  Cookies.set('music', true);
+}
 
 const handleSignUp = async () => {
   try {
@@ -22,25 +25,28 @@ const handleSignUp = async () => {
       email: email.value,
       password: password.value
     });
-    playSound("success");
+    if (music) {
+      playSound("success");
+    }
     notification.send('Registration successful', 'success');
   } catch (error) {
-    if (error.response && error.response.data) {
-      playSound("danger");  
-      notification.send('Registration failed', 'danger');
+    if (music) {
+      playSound("wrong");
     }
+    notification.send('Registration failed', 'danger');
+
   }
 };
 </script>
 
 <template>
   <section class="signup-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
+    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo" />
     <div>
-      <INPUT v-model="username" placeholder="Username" type="username"/>
-      <INPUT v-model="email" placeholder="Email" type="email"/>
-      <INPUT v-model="password" placeholder="Password" type="password"/>
-      <INPUT v-model="c_password" placeholder="Confirm Password" type="password"/>
+      <INPUT v-model="username" placeholder="Username" type="username" />
+      <INPUT v-model="email" placeholder="Email" type="email" />
+      <INPUT v-model="password" placeholder="Password" type="password" />
+      <INPUT v-model="c_password" placeholder="Confirm Password" type="password" />
     </div>
     <BUTTON @click="handleSignUp">SIGN UP</BUTTON>
     <p>

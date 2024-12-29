@@ -6,7 +6,7 @@ import { notification } from "@/assets/js/notificationEvent.js";
 export default {
   props: {
     number: {
-      type: Uint32Array,
+      type: Number,
       default: 0
     },
     type: {

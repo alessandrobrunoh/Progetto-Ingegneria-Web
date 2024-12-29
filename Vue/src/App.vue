@@ -5,6 +5,8 @@ import axios from 'axios';
 import BUTTON from '@/pages/components/Button.vue';
 import NOTIFICATION from '@/pages/components/Notification.vue';
 import { notification } from './assets/js/notificationEvent.js';
+import Cookies from 'js-cookie';
+import { playSound } from './assets/js/playSound.js';
 
 const isAuthenticated = ref(false);
 const route = useRoute();
@@ -14,15 +16,21 @@ const notificationMessage = notification.notificationMessage;
 const notificationColor = notification.notificationColor;
 const player_id = ref(null);
 const theme = ref('Old Style');
+const music = ref(true);
 const avatar = ref(0);
 const briscola = ref(null);
+const imageLoaded = ref(false);
+
+const cookies = Cookies.get('music');
+if (!cookies) {
+  Cookies.set('music', true);
+}
 
 const checkAuth = async () => {
   const token = localStorage.getItem('token');
   isAuthenticated.value = !!token;
   if (!isAuthenticated.value) {
-    router.push('/sign-in');
-    return;
+    return router.push('/sign-in');
   }
 };
 
@@ -36,7 +44,7 @@ const getLastCard = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/last_card`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     return response.data.seed;
@@ -55,7 +63,7 @@ const isInGame = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/player/in_game`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
     if (response.data.length > 0 && !isGameRoute()) {
@@ -83,10 +91,9 @@ const giveUp = async () => {
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/player/give_up`, {}, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
-    console.log('Give up response:', response.data);
     notification.send('You gave up', 'danger');
     router.push('/');
     return response.data;
@@ -107,9 +114,14 @@ const getUserID = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'authorization': `Bearer ${token}`
       }
     });
+    if (response.data == "Logged out successfully") {
+      notification.send("Session expired, please log in again", "danger");
+      localStorage.removeItem('token');
+      return router.push("/");
+    }
     return response.data;
   } catch (error) {
     console.error('Error fetching user ID:', error);
@@ -123,10 +135,18 @@ const getUser = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        'authorization': `Bearer ${token}`
       },
     });
     avatar.value = response.data.avatar;
+    imageLoaded.value = true;
+    music.value = response.data.music;
+    if (music.value == 1) {
+      music.value = true;
+    } else {
+      music.value = false;
+    }
+    Cookies.set('music', music.value);
     document.body.setAttribute('theme', response.data.theme);
     return response.data;
   } catch (error) {
@@ -134,10 +154,17 @@ const getUser = async () => {
   }
 }
 
+const RedirectProfile = () => {
+  if (cookies === "true") {
+    playSound('btn_click');
+  }
+  router.push('/profile');
+};
+
 onMounted(async () => {
   player_id.value = await getUserID();
   await checkAuth();
-  await getUser();
+  getUser();
   briscola.value = await getLastCard();
 });
 
@@ -156,12 +183,11 @@ onUpdated(async () => {
         src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389"
         alt="Vue logo" /></router-link>
     <!-- <img v-if="isGameRoute()" class="briscola" -->
-      <!-- src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" /> -->
-       <span v-if="isGameRoute()">Briscola: {{ briscola }}</span>
+    <!-- src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" /> -->
+    <span v-if="isGameRoute()">Briscola: {{ briscola }}</span>
     <BUTTON v-if="isGameRoute()" @click="giveUp" color="danger">GIVE UP</BUTTON>
-    <router-link to="/profile">
-      <img alt="Avatar Profile" :src="`../assets/img/avatars/${avatar}.svg`" />
-    </router-link>
+    <img @click="RedirectProfile" v-if="imageLoaded" alt="Avatar Profile"
+      :src="`../assets/img/avatars/${avatar}.svg`" />
   </section>
   <main :theme="theme">
     <router-view></router-view>

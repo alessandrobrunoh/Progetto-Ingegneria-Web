@@ -2,22 +2,32 @@
 import { notification } from "@/assets/js/notificationEvent.js";
 import INPUT from "./components/Input.vue";
 import BUTTON from "./components/Button.vue";
+import CHECKBOX from "./components/checkBox.vue";
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import Cookies from "js-cookie";
 
 const username = ref("");
 const email = ref("");
 const password = ref("");
 const avatar = ref("");
 const theme = ref("");
+const cards = ref("");
+const music = ref("");
 const router = useRouter();
 const player_id = ref(null);
-const tooltipVisible = ref(false);
+const imageLoaded = ref(false);
+const checkboxLoaded = ref(false);
 
 const close = () => {
     router.push("/");
 };
+
+const cookies = Cookies.get('music') === "true";
+if (!cookies) {
+    Cookies.set('music', true);
+}
 
 const getUserID = async () => {
     const token = localStorage.getItem("token");
@@ -29,10 +39,10 @@ const getUserID = async () => {
     try {
         const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
             headers: {
-                Authorization: `Bearer ${token}`,
-            },
+                'authorization': `Bearer ${token}`
+            }
         });
-        if(response.data == "Logged out successfully") {
+        if (response.data == "Logged out successfully") {
             notification.send("Session expired, please log in again", "danger");
             return router.push("/");
         }
@@ -44,18 +54,32 @@ const getUserID = async () => {
 
 const getUser = async () => {
     const token = localStorage.getItem("token");
+    if (!token) {
+        console.error("Authorization token is missing");
+        return;
+    }
 
     try {
         const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
-            },
+                'authorization': `Bearer ${token}`
+            }
         });
         username.value = response.data.username;
         email.value = response.data.email;
         password.value = response.data.password;
         avatar.value = response.data.avatar;
+        imageLoaded.value = true;
         theme.value = response.data.theme;
+        cards.value = response.data.cards;
+        music.value = response.data.music;
+        if(music.value === 1) {
+            music.value = true;
+        } else {
+            music.value = false;
+        }
+        checkboxLoaded.value = true;
+        return response.data;
     } catch (error) {
         console.error("Error fetching user data:", error);
     }
@@ -69,25 +93,30 @@ const saveProfile = async () => {
     }
 
     try {
-        const response = await axios.post(`http://${window.location.hostname}:8000/api/user/profile/${username.value}/${email.value}/${password.value}/${theme.value}/${avatar.value}/save`, {}, {
+        const response = await await axios.post(`http://${window.location.hostname}:8000/api/user/profile/${username.value}/${email.value}/${password.value}/${theme.value}/${avatar.value}/${cards.value}/${music.value}/save`, {}, {
             headers: {
-                Authorization: `Bearer ${token}`,
-            },
+                'authorization': `Bearer ${token}`
+            }
         });
-        notification.send("Profile updated successfully", "success");
+        Cookies.set('music', music.value);
+        notification.send("Profile saved successfully", "success");
         window.location.reload();
         return response.data;
     } catch (error) {
-        notification.send("Error:" +  error, "danger");
-        console.error("Error updating user data:", error);
+        console.error("Error saving user data:", error);
     }
 }
 
 const changeAvatar = () => {
-    const avatars = Array.from({ length: 32 }, (_, i) => i + 1);
-    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-    avatar.value = randomAvatar;
+    if (avatar.value === 32) {
+        avatar.value = 0;
+    }
+    avatar.value += 1;
 }
+
+const updateMusic = (value) => {
+    music.value = value;
+};
 
 onMounted(async () => {
     player_id.value = await getUserID();
@@ -99,20 +128,44 @@ onMounted(async () => {
 <template>
     <section class="profile-settings-container">
         <section class="avatar-container">
-            <img :src="`/assets/img/avatars/${avatar}.svg`" alt="Profile Picture"/>
+            <img v-if="imageLoaded" :src="`/assets/img/avatars/${avatar}.svg`" alt="Profile Picture" />
             <i @click="changeAvatar" class="fe-change" @mouseover="showTooltip" @mouseleave="hideTooltip"></i>
         </section>
-        <INPUT v-model="username" placeholder="New Username" type="username" />
-        <INPUT v-model="email" placeholder="New Email" type="email" />
-        <INPUT v-model="password" placeholder="New Password" type="password" />
-        <select v-model="theme">
-            <option value="Old Style">Old Style</option>
-            <option value="Light">Light</option>
-            <option value="Dark">Dark</option>
-            <option value="Barbie">Barbie</option>
-            <option value="Camo">Camo</option>
-            <!-- Aggiungi altre opzioni se necessario -->
-        </select>
+        <div class="input-group">
+            <label for="username">Username</label>
+            <INPUT v-model="username" placeholder="New Username" id="username" type="username" />
+        </div>
+        <div class="input-group">
+            <label for="email">Email</label>
+            <INPUT v-model="email" placeholder="New Email" id="email" type="email" />
+        </div>
+        <div class="input-group">
+            <label for="password">Password</label>
+            <INPUT v-model="password" placeholder="New Password" id="password" type="password" />
+        </div>
+        <div class="input-group">
+            <label for="theme">Theme</label>
+            <select v-model="theme" id="theme">
+                <option value="Old Style">Old Style</option>
+                <option value="Light">Light</option>
+                <option value="Dark">Dark</option>
+                <option value="Barbie">Barbie</option>
+                <option value="Camo">Camo</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="cards">Cards</label>
+            <select v-model="cards" id="cards">
+                <option value="Piacentine">Piacentine</option>
+                <option value="Napoletane">Napoletane</option>
+                <option value="Siciliane">Siciliane</option>
+                <option value="Romagnole">Romagnole</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="music">Music</label>
+            <CHECKBOX v-if="checkboxLoaded" id="music" :check="music" @change="updateMusic" />
+        </div>
     </section>
     <footer>
         <BUTTON @click="saveProfile">SAVE</BUTTON>
@@ -122,16 +175,16 @@ onMounted(async () => {
 
 <style>
 select {
-  display: flex;
-  gap: 10px;
-  padding: 15px;
-  border: 4px solid var(--success-color);
-  border-radius: 15px;
-  flex-direction: row;
-  width: 60vw;
-  background-color: var(--white-color);
-  box-shadow: 0 4px 4px rgb(0 0 0 / 25%); 
-} 
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+    border: 4px solid var(--success-color);
+    border-radius: 15px;
+    flex-direction: row;
+    width: 60vw;
+    background-color: var(--white-color);
+    box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
+}
 
 i:hover {
     cursor: pointer;
@@ -146,6 +199,7 @@ i:hover {
     img {
         width: 20vw;
         height: auto;
+        margin-left: 1.5rem;
     }
 
     i {
@@ -156,9 +210,11 @@ i:hover {
 .profile-settings-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 2vh;
-    justify-content: space-between;
-    position: relative;
+    gap: 15px;
+    max-height: calc(100vh - 40vh);
+    /* Altezza massima per rendere scrollabile */
+    overflow-y: auto;
+    /* Abilita lo scroll verticale */
+    padding: 15px;
 }
 </style>

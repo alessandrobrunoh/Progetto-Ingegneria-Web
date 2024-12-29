@@ -10,23 +10,24 @@ const filteredRooms = ref([]);
 const showWaitingOnly = ref(false);
 
 const getRooms = async () => {
-    try {
-        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        if (response.data === "Logged out successfully") {
-            notification.send("Logged out Successfully", "success");
-            localStorage.removeItem('token');
-            router.push('/sign-up');
-            return;
-        }
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching rooms:', error);
-        notification.send("Error fetching rooms", "danger");
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (response.data === "Logged out successfully") {
+      notification.send("Logged out Successfully", "success");
+      localStorage.removeItem('token');
+      router.push('/sign-up');
+      return [];
     }
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    notification.send("Error fetching rooms", "danger");
+    return [];
+  }
 };
 
 // Funzione per ottenere tutte le stanze e i giocatori
@@ -37,7 +38,6 @@ const getRoomsPlayers = async (code) => {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
-        console.log('players:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error fetching rooms:', error);
@@ -53,7 +53,7 @@ const deleteRoom = async (roomCode) => {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
-        console.log(`Room ${roomCode} deleted successfully`);
+        return response.data;
     } catch (error) {
         console.error(`Error deleting room ${roomCode}:`, error);
     }
@@ -62,8 +62,12 @@ const deleteRoom = async (roomCode) => {
 // Funzione per controllare e cancellare stanze con 0 giocatori
 const checkAndDeleteEmptyRooms = async () => {
     const rooms = await getRooms();
+    if (!Array.isArray(rooms)) {
+        console.error('Rooms is not an array');
+        return;
+    }
     for (const room of rooms) {
-        const players = await getRoomsPlayers(room.code)
+        const players = await getRoomsPlayers(room.code);
         if (players.length === 0) {
             await deleteRoom(room.code);
         }
@@ -78,12 +82,12 @@ const refreshRooms = async () => {
 
 // Esegui il controllo delle stanze vuote al montaggio del componente
 onMounted(async () => {
+  await checkAndDeleteEmptyRooms();
+  rooms.value = await getRooms();
+  setInterval(async () => {
     await checkAndDeleteEmptyRooms();
     rooms.value = await getRooms();
-    setInterval(async () => {
-        await checkAndDeleteEmptyRooms();
-        rooms.value = await getRooms();
-    }, 10000);
+  }, 10000);
 });
 </script>
 
