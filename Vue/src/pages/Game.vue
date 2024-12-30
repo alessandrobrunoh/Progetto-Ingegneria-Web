@@ -17,6 +17,12 @@ const player_id = ref(null);
 const player_hand = ref([]);
 const table_cards = ref([]);
 const card_disabled = ref(true);
+const Loaded = ref({
+  getRoom: false,
+  getGameTable: false,
+  getPlayerHand: false,
+});
+const cardTheme = ref(null);
 
 /**
  * Ottiene le informazioni della stanza di gioco.
@@ -53,10 +59,9 @@ const getRoom = async () => {
       notification.send("Game not started", "danger");
       return router.push('/');
     }
+    Loaded.getRoom = true;
     return response.data;
   } catch (error) {
-    notification.send("Game not found", "danger");
-    router.push('/');
     console.error('Error fetching room code:', error);
   }
 };
@@ -108,10 +113,11 @@ const getUserName = async (player_id) => {
         'authorization': `Bearer ${token}`
       }
     });
+    console.log(response.data);
+    cardTheme.value = response.data.cards;
     return response.data.username.charAt(0).toUpperCase() + response.data.username.slice(1);
   } catch (error) {
-    router.push('/');
-    console.error('Error fetching room code:', error);
+    console.error('Error fetching get username:', error);
   }
 };
 
@@ -129,9 +135,10 @@ const getGameTable = async () => {
       }
     });
     table_cards.value = response.data;
+    Loaded.getGameTable = true;
     return response.data;
   } catch (error) {
-    console.error('Error fetching room code:', error);
+    console.error('Error fetching game table:', error);
   }
 };
 
@@ -148,14 +155,10 @@ const getPlayerHand = async () => {
         'authorization': `Bearer ${token}`
       }
     });
-    if (response.data.length == 0) {
-      for (let i = 0; i < 3; i++) {
-        drawCard();
-      }
-    }
+    Loaded.getPlayerHand = true;
     return response.data;
   } catch (error) {
-    console.error('Error fetching room code:', error);
+    console.error('Error fetching player hand:', error);
   }
 };
 
@@ -175,7 +178,7 @@ const drawCard = async () => {
     player_hand.value.push(response.data);
     return response.data;
   } catch (error) {
-    console.error('Error fetching room code:', error);
+    console.error('Error drawing card:', error);
   }
 };
 
@@ -192,9 +195,10 @@ const getUserID = async () => {
         'authorization': `Bearer ${token}`
       }
     });
+    console.log(response.data);
     return response.data;
   } catch (error) {
-    console.error('Error fetching room code:', error);
+    console.error('Error fetching get user id:', error);
   }
 };
 
@@ -219,10 +223,16 @@ const updateTurnInfo = async () => {
   }
 };
 
+const isAllLoaded = () => {
+  if (Loaded.getRoom && Loaded.getGameTable && Loaded.getPlayerHand) {
+    return true;
+  }
+};
+
 onMounted(async () => {
-  turn_player_id.value = await getRoom();
+  player_id.value = getUserID();
+  turn_player_id.value = getRoom();
   turn_player_id.value = turn_player_id.value.turn_player_id;
-  player_id.value = await getUserID();
   await updateTurnInfo();
 
   socket.value = io(`http://${window.location.hostname}:8000`);
@@ -230,10 +240,9 @@ onMounted(async () => {
   // Everyone joins the game to receive the game events
   socket.value.emit('joinGame', route.params.code);
 
-
   socket.value.on('turnPassed', async (player_id) => {
-    await drawCard();
-    await updateTurnInfo(); 
+    drawCard();
+    await updateTurnInfo();
   });
 
   socket.value.on('cardPlayed', async (player_id) => {
@@ -248,19 +257,17 @@ onUnmounted(async () => {
 </script>
 
 <template>
-  <section class="container">
+  <section v-if="isAllLoaded" class="game-container">
     <header>
       <h2>{{ turn_player_name }} Turn</h2>
     </header>
     <section class="game-table-container">
-      <CARD v-for="card in table_cards" :number="card.number" :seed="card.seed" disabled></CARD>
-      <!-- <img v-for="card in table_cards" :src="`/assets/img/cards/${card.number}_${card.seed}.png`" :alt="`Card ${card.number} of ${card.seed}`" class="card-image" :key="card.id" /> -->
+      <CARD v-for="card in table_cards" :cardTheme="cardTheme" :number="card.number" :seed="card.seed" disabled></CARD>
     </section>
     <footer>
       <section class="players-cards">
-        <CARD v-for="card in player_hand" :number="card.number" :seed="card.seed" :disabled="card_disabled"
+        <CARD v-for="card in player_hand" :cardTheme="cardTheme" :number="card.number" :seed="card.seed" :disabled="card_disabled"
           @playCard="updateGameTable"></CARD>
-        <!-- <img v-for="card in player_hand" :src="`/assets/img/cards/${card.number}_${card.seed}.png`" :alt="`Card ${card.number} of ${card.seed}`" class="card-image" :key="card.id" :disabled="card_disabled" @click="updateGameTable(card)" /> -->
       </section>
     </footer>
   </section>
@@ -268,11 +275,15 @@ onUnmounted(async () => {
 
 <style scoped>
 img {
-  width: 50px;
+  padding: 5px;
+  background-color: var(--white-color);
+  border-radius: 15px;
+  border: 3px solid var(--primary-color);
+  width: 5rem;
   height: auto;
 }
 
-.container {
+.game-container {
   width: 100%;
 }
 

@@ -22,19 +22,22 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  cardTheme: {
+    type: String,
+    required: true
   }
 });
 
 const handleClick = async () => {
+  if (props.disabled) {
+    return;
+  }
   await playCard();
   await passTurn();
 };
 
 const playCard = async () => {
-  if (props.disabled) {
-    return;
-  }
-
   const token = localStorage.getItem('token');
   if (!token) {
     console.error('Authorization token is missing');
@@ -79,24 +82,17 @@ const passTurn = async () => {
 
 <template>
   <section class="card-container" @click="handleClick" :class="{ disabled: disabled }">
-    <div class="box">
-      <h2>{{ number }}</h2>
-      <p>{{ seed }}</p>
-    </div>
+    <img :src="`/assets/img/cards/${cardTheme}/${number}_${seed}.svg`" alt="Card" />
   </section>
 </template>
 
 <style scoped>
-.box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 15vw;
-  min-height: 13vh;
-  border-radius: 15px;
-  background-color: var(--primary-color);
-  color: var(--secondary-color);
+img {
+  width: 4rem;
+  border-radius: 10px;
+  background-color: var(--white-color);
+  border: 3px solid var(--primary-color);
+  padding: 5px;
   box-shadow: var(--box-shadow);
   cursor: pointer;
 }
@@ -105,4 +101,5 @@ const passTurn = async () => {
   opacity: 0.5;
   cursor: not-allowed !important;
 }
+
 </style>

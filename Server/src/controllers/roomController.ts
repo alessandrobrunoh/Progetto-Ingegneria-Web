@@ -757,6 +757,7 @@ export const drawCard = async (req: Request, res: Response) => {
       "SELECT * FROM deck WHERE room_code = ? ORDER BY RAND() LIMIT 1",
       [code]
     );
+    console.log(rows);
 
     if (rows.length > 0) {
       const drawnCard = rows[0];

@@ -11,7 +11,7 @@ const props = defineProps({
 const emits = defineEmits(['change']);
 
 const isChecked = ref(props.check);
-console.log(props.check);
+
 const toggleCheckbox = () => {
   isChecked.value = !isChecked.value;
   emits('change', isChecked.value);

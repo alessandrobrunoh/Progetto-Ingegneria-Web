@@ -33,11 +33,8 @@
 # Problematiche
 - SQL Injection (non srcivere le SQL)
 
-@todo Aggiungere una musichetta d'attesa nella stanza Room
-@todo Nel Profile non trova le statistiche
-@todo Sistemare lo spazio tra Squadra 1 e Suqadra 2
-@todo Se Host quitta la Room chiude la Room
+
 @todo inizialmente non ti dice la briscola, solo se ricarichi la pagina
-@todo Mettere che puoi scegliere il tema delle carte
 @todo Mettere che ti compare un mazzetto fittizzio di carte per farti capire che stai guadagnando punti
 @todo Mettere che quando é il tuo turno ti fa un suono
+@todo se la room é iniziata non devi piu poter entrare nella Room

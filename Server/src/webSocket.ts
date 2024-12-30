@@ -21,6 +21,11 @@ export const initializeWebSocket = (server) => {
       socket.to(room).emit("playerLeft", player);
       socket.leave(room);
     });
+
+    socket.on("hostLeft", (room) => {
+      socket.to(room).emit("hostDelete");
+      socket.leave(room);
+    });
     
     socket.on("startGame", (room) => {
       socket.to(room).emit("gameStarted");
@@ -48,6 +53,7 @@ export const initializeWebSocket = (server) => {
     socket.on("disconnect", () => {
       console.log("Client disconnected");
     });
+
   });
 
   return io;

@@ -99,10 +99,11 @@ const saveProfile = async () => {
             }
         });
         Cookies.set('music', music.value);
-        notification.send("Profile saved successfully", "success");
         window.location.reload();
+        notification.send("Profile saved successfully", "success");
         return response.data;
     } catch (error) {
+        notification.send("Error " + error, "danger");
         console.error("Error saving user data:", error);
     }
 }
@@ -155,7 +156,7 @@ onMounted(async () => {
         </div>
         <div class="input-group">
             <label for="cards">Cards</label>
-            <select v-model="cards" id="cards">
+            <select v-model="cardTheme" id="cards">
                 <option value="Piacentine">Piacentine</option>
                 <option value="Napoletane">Napoletane</option>
                 <option value="Siciliane">Siciliane</option>
