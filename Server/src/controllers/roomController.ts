@@ -5,6 +5,7 @@ import { getUserIdFromToken } from "../utils/getIdByToken";
 import { debugPrint } from "../utils/debugPrint";
 import { generateDeck } from "../utils/generateDeck";
 import { checkWinner } from "../utils/checkWinner";
+import { drawCard } from "../utils/drawCard";
 
 /**
  * Recupera tutte le stanze dal database e le invia come risposta JSON.
@@ -365,7 +366,7 @@ export const joinRoom = async (req: Request, res: Response) => {
       "SELECT user_id, team FROM players WHERE room_code = ?",
       [code]
     );
-    if (players.length >= 4) {
+    if (players.length >= 2) {
       await connection.execute(
         "UPDATE rooms SET status = 'full' WHERE code = ?",
         [code]
@@ -389,8 +390,8 @@ export const joinRoom = async (req: Request, res: Response) => {
 
     res.send("Joined room successfully");
   } catch (error) {
-    console.error('Error joining room:', error);
-    res.status(500).send('Error joining room');
+    console.error("Error joining room:", error);
+    res.status(500).send("Error joining room");
   }
 };
 
@@ -448,7 +449,9 @@ export const leaveRoom = async (req: Request, res: Response) => {
           "UPDATE players SET host = 1 WHERE room_code = ? AND user_id = ?",
           [code, newHost[0].user_id]
         );
-        debugPrint(`New host with ID: ${newHost[0].user_id} assigned for room with CODE: ${code}`);
+        debugPrint(
+          `New host with ID: ${newHost[0].user_id} assigned for room with CODE: ${code}`
+        );
       }
     }
 
@@ -504,6 +507,28 @@ export const startGame = async (req: Request, res: Response) => {
       );
     }
 
+    const [players]: any = await connection.execute(
+      "SELECT user_id FROM players WHERE room_code = ?",
+      [code]
+    );
+
+    for (let i = 0; i < players.length; i++) {
+      for (let j = 0; j < 3; j++) {
+        drawCard(code, players[i].user_id);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    const [lastCard]: any = await connection.execute(
+      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 1",
+      [code]
+    );
+
+    await connection.execute(
+      "UPDATE rooms SET number = ?, seed = ? WHERE code = ?",
+      [lastCard[0].number, lastCard[0].seed, code]
+    );
+
     debugPrint(`Game started for room with CODE: ${code}`);
     res.send(`Game started for room with CODE: ${code}`);
   } catch (error) {
@@ -525,22 +550,59 @@ export const startGame = async (req: Request, res: Response) => {
  * @throws Restituisce uno stato 500 se si verifica un errore durante l'aggiornamento dello stato della stanza.
  */
 export const endGame = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { code } = req.params;
   try {
     const connection = await connect();
 
-    // Elimina le righe corrispondenti nella tabella hand_cards
+    // Update room status to "ended"
     await connection.execute(
-      "DELETE FROM hand_cards WHERE player_id IN (SELECT user_id FROM players WHERE room_code = ?)",
-      [id]
+      'UPDATE rooms SET status = "ended" WHERE code = ?',
+      [code]
     );
 
-    await connection.execute('UPDATE rooms SET status = "ended" WHERE id = ?', [
-      id,
-    ]);
-    res.send("Game ended successfully");
+    // Retrieve players in the room
+    const [players]: any = await connection.execute(
+      'SELECT user_id, points FROM players WHERE room_code = ?',
+      [code]
+    );
+
+    // Determine the winner
+    const winner = players.reduce((prev, current) => (prev.points > current.points) ? prev : current);
+
+    // Update each player's total games and best score
+    for (const player of players) {
+      await connection.execute(
+        'UPDATE users SET total_games = total_games + 1 WHERE id = ?',
+        [player.user_id]
+      );
+
+      // Check if the current score is the best score
+      const [user] = await connection.execute(
+        'SELECT best_points FROM users WHERE id = ?',
+        [player.user_id]
+      );
+
+      if (player.points > user[0].best_points) {
+        await connection.execute(
+          'UPDATE users SET best_points = ? WHERE id = ?',
+          [player.points, player.user_id]
+        );
+      }
+
+      // Update wins for the winner
+      if (player.user_id === winner.user_id) {
+        await connection.execute(
+          'UPDATE users SET wins = wins + 1 WHERE id = ?',
+          [player.user_id]
+        );
+      }
+    }
+
+    debugPrint(`Game ended for room with CODE: ${code}`);
+    res.send("Game ended");
   } catch (error) {
-    console.error("Error ending game:", error);
+    debugPrint(`Error occurred while ending game for room with CODE: ${code}`);
+    console.error("Error details:", error);
     res.status(500).send("An error occurred");
   }
 };
@@ -604,6 +666,7 @@ export const playCard = async (req: Request, res: Response) => {
  * @returns Una risposta con un messaggio di conferma o un messaggio di errore in caso di fallimento.
  */
 export const passTurn = async (req: Request, res: Response) => {
+  let winnerPlayer = "";
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     debugPrint("Authorization token is missing");
@@ -621,58 +684,6 @@ export const passTurn = async (req: Request, res: Response) => {
   try {
     const connection = await connect();
 
-    const [players]: any = await connection.execute(
-      "SELECT user_id FROM players WHERE room_code = ?",
-      [code]
-    );
-
-    const [deck]: any = await connection.execute(
-      "SELECT * FROM deck WHERE room_code = ?",
-      [code]
-    );
-    const lastCard = deck[deck.length - 1];
-
-    const [table]: any = await connection.execute(
-      "SELECT * FROM table_cards WHERE room_code = ?",
-      [code]
-    );
-
-    if (table.length === players.length) {
-      console.log("There are cards == players on the table");
-      // ? Controlla la prima carta sul tavolo ()
-      let points = 0;
-
-      console.log(`Last card: ${lastCard.number}/${lastCard.seed}`);
-      console.log(`First card: ${table[0].number}/${table[0].seed}`);
-      console.log(`Cards on the table: ${table.length}`);
-      console.log(`Table: ${table}`);
-      for (let i = 0; i < table.length; i++) {
-        const winner = checkWinner(
-          lastCard.seed,
-          table[0].number,
-          table[0].seed,
-          table[i].number, // Corretto l'indice
-          table[i].seed   // Corretto l'indice
-        );
-
-        if (typeof winner === "object" && winner.player === "first") {
-          points += winner.value;
-          await connection.execute(
-            "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
-            [points, table[0].player_id, code]
-          );
-        } else if (typeof winner === "object") {
-          points += winner.value;
-          await connection.execute(
-            "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
-            [points, table[1].player_id, code]
-          );
-        }
-      }
-      await connection.execute("DELETE FROM table_cards WHERE room_code = ?", [code]);
-    }
-
-    
     const [rows]: any = await connection.execute(
       "SELECT user_id FROM players WHERE room_code = ?",
       [code]
@@ -727,77 +738,173 @@ export const passTurn = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Estrae una carta casuale e la inserisce nella mano del giocatore specificato.
- *
- * @param req - L'oggetto della richiesta, contenente i parametri `id` (ID della stanza) e `player_id` (ID del giocatore).
- * @param res - L'oggetto della risposta, utilizzato per inviare la risposta al client.
- *
- * @returns Una risposta che indica se la carta è stata estratta con successo o se si è verificato un errore.
- *
- * @throws Restituisce un errore 500 se si verifica un problema durante l'estrazione della carta.
- */
-export const drawCard = async (req: Request, res: Response) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) {
-    debugPrint("Authorization token is missing");
-    return res.status(401).send("Authorization token is missing");
-  }
-
-  const player_id = getUserIdFromToken(token);
-  if (!player_id) {
-    debugPrint("Invalid or expired token");
-    return res.status(401).send("Invalid or expired token");
-  }
-
+export const getLeaderboard = async (req: Request, res: Response) => {
   const { code } = req.params;
   try {
+    let team1 = {
+      points: 0,
+      players: [],
+    };
+    let team2 = {
+      points: 0,
+      players: [],
+    };
     const connection = await connect();
     const [rows]: any = await connection.execute(
-      "SELECT * FROM deck WHERE room_code = ? ORDER BY RAND() LIMIT 1",
-      [code]
-    );
-    console.log(rows);
-
-    if (rows.length > 0) {
-      const drawnCard = rows[0];
-      await connection.execute(
-        "INSERT INTO hand_cards (room_code, number, seed, player_id) VALUES (?, ?, ?, ?)",
-        [code, drawnCard.number, drawnCard.seed, player_id]
-      );
-      await connection.execute("DELETE FROM deck WHERE id = ?", [drawnCard.id]);
-
-      debugPrint(`Card drawn for room with CODE: ${code}`);
-      return res.send(drawnCard);
-    } else {
-      return res.status(404).send("No cards left in the deck");
-    }
-  } catch (error) {
-    debugPrint(`Error occurred while drawing card for room with CODE: ${code}`);
-    console.error("Error details:", error);
-    return res.status(500).send("An error occurred");
-  }
-};
-
-export const getLastCard = async (req: Request, res: Response) => {
-  const { code } = req.params;
-  try {
-    const connection = await connect();
-    const [rows]: any = await connection.execute(
-      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 1",
+      "SELECT user_id, points, team FROM players WHERE room_code = ?",
       [code]
     );
 
     if (rows.length === 0) {
-      return res.status(404).send("No cards left in the deck");
+      return res.status(404).send("Room not found");
     }
 
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].team === 1) {
+        team1.points += rows[i].points;
+        team1.players.push(rows[i].user_id);
+      } else {
+        team2.points += rows[i].points;
+        team2.players.push(rows[i].user_id);
+      }
+    }
+
+    console.log("Team 1:", team1);
+    console.log("Team 2:", team2);
+
+    return res.json([team1, team2]);
+  } catch (error) {
+    console.error("Error getting leaderboard:", error);
+    return res.status(500).send("An error occurred");
+  }
+};
+
+export const getTurnWinner = async (req: Request, res: Response) => {
+  const { code } = req.params;
+  try {
+    const connection = await connect();
+
+    const [briscola]: any = await connection.execute(
+      "SELECT * FROM rooms WHERE code = ?",
+      [code]
+    );
+
+    const [deck]: any = await connection.execute(
+      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 1",
+      [code]
+    );
+
+    console.log("Briasco:", briscola[0]);
+
+    const [players]: any = await connection.execute(
+      "SELECT * FROM players WHERE room_code = ?",
+      [code]
+    );
+
+    const [table]: any = await connection.execute(
+      "SELECT * FROM table_cards WHERE room_code = ? ORDER BY id ASC",
+      [code]
+    );
+
+    let lastTurn: number | undefined;
+    let turn: number | undefined;
+
+    if (deck.length === 0) {
+      if (typeof lastTurn === "undefined") {
+        lastTurn = 3 * players.length;
+        turn = 3 * players.length;
+        console.log("Last Turn:", lastTurn);
+      }
+    } else {
+      if (turn !== undefined) {
+        turn--;
+        console.log("Turn:", turn);
+      }
+    }
+
+    if (turn === 0) {
+      await connection.execute(
+        "UPDATE rooms SET status = 'ended' WHERE code = ?",
+        [code]
+      );
+      console.log("Partita finita");
+      return res.json("Game Ended");
+    }
+
+    for (let i = 1; i < table.length; i++) {
+      const turnWinner = checkWinner(
+        briscola[0].seed,
+        table[0].number,
+        table[0].seed,
+        table[i].number,
+        table[i].seed,
+        table[i].player_id,
+        table[0].player_id
+      );
+
+      console.log("*******");
+      console.log("First card Number:", table[0].number);
+      console.log("First card Seed:", table[0].seed);
+      console.log("First ID:", table[0].player_id);
+      console.log("*******");
+      console.log("Player card Number:", table[i].number);
+      console.log("Player card Seed:", table[i].seed);
+      console.log("Player ID:", table[i].player_id);
+      console.log("Turn winner:", turnWinner);
+
+      await connection.execute(
+        "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
+        [turnWinner.points, turnWinner.player, code]
+      );
+
+      await connection.execute("DELETE FROM table_cards WHERE room_code = ?", [
+        code,
+      ]);
+
+      let turnWinnerIndex = players.findIndex(
+        (player: any) => player.user_id === turnWinner.player
+      );
+
+      if (turnWinnerIndex !== -1) {
+        for (let i = 0; i < players.length; i++) {
+          const currentPlayerIndex = (turnWinnerIndex + i) % players.length;
+          const currentPlayer = players[currentPlayerIndex];
+          drawCard(code, currentPlayer.user_id);
+          debugPrint(`PlayerID: ${currentPlayer.user_id} drew a card`);
+        }
+        debugPrint(
+          "All players have drawn a card starting from the turnWinner"
+        );
+      } else {
+        debugPrint("Turn winner not found in the players list");
+      }
+
+      await connection.execute(
+        "UPDATE rooms SET turn_player_id = ? WHERE code = ?",
+        [turnWinner.player, code]
+      );
+      return res.json(turnWinner);
+    }
+  } catch (error) {
+    console.error("Error getting turn winner:", error);
+    return res.status(500).send("An error occurred");
+  }
+};
+
+export const getBriscola = async (req: Request, res: Response) => {
+  const { code } = req.params;
+  try {
+    const connection = await connect();
+    const [rows]: any = await connection.execute(
+      "SELECT number, seed FROM rooms WHERE code = ?",
+      [code]
+    );
     return res.send(rows[0]);
   } catch (error) {
     console.error("Error getting last card:", error);
     return res.status(500).send("An error occurred");
   }
-}
+};
 
 export const giveUp = async (req: Request, res: Response) => {
   const token = req.headers.authorization?.split(" ")[1];

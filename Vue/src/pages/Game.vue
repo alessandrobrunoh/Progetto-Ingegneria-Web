@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { notification } from "@/assets/js/notificationEvent.js";
@@ -7,12 +7,15 @@ import CARD from "./components/Card.vue";
 import TITLES from "./components/Titles.vue";
 import { io } from 'socket.io-client';
 import { playSound } from '../assets/js/playSound';
+import { getToken } from '../assets/js/getToken';
+import Cookies from 'js-cookie';
 
 const route = useRoute();
 const router = useRouter();
 const socket = ref(io(`http://${window.location.hostname}:8000`));
 const turn_player_id = ref(null);
 const turn_player_name = ref(null);
+const players = ref([]);
 const player_id = ref(null);
 const player_hand = ref([]);
 const table_cards = ref([]);
@@ -23,89 +26,68 @@ const Loaded = ref({
   getPlayerHand: false,
 });
 const cardTheme = ref(null);
+const token = getToken();
+const cookies = Cookies.get("music");
+if (!cookies) {
+  Cookies.set("music", true);
+}
+const playerPoints = ref(false);
 
-/**
- * Ottiene le informazioni della stanza di gioco.
- * 
- * @returns Un Json con le informazioni della stanza di gioco.
- * 
- * @throws {Error} Se il token di autorizzazione è mancante.
- * @throws {Error} Se si verifica un errore durante la richiesta API.
- * @throws {Error} Se la stanza non è stata trovata.
- * @throws {Error} Se la stanza non è stata avviata.
- */
 const getRoom = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}`, {
       headers: {
         'authorization': `Bearer ${token}`
       }
     });
-
-    // If the room is not found, redirect to the home page
-    if (response.data.length === 0) {
-      notification.send("Game not found", "danger");
-      return router.push('/');
-    }
-
-    // If the room is not started, redirect to the home page
-    if (response.data.status != "in_progress") {
-      notification.send("Game not started", "danger");
-      return router.push('/');
-    }
-    Loaded.getRoom = true;
     return response.data;
   } catch (error) {
     console.error('Error fetching room code:', error);
   }
 };
 
-/**
- * Ottiene la lista dei giocatori della stanza di gioco.
- * 
- * @returns Un Json con la lista dei giocatori della stanza di gioco.
- * 
- * @throws {Error} Se il token di autorizzazione è mancante.
- * @throws {Error} Se si verifica un errore durante la richiesta API.
- */
-const isPlayerInRoom = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
+const getUserID = async () => {
 
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+      headers: {
+        'authorization': `Bearer ${token}`
+      }
+    });
+    getUserName(response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching get user id:', error);
+  }
+};
+
+const getPlayers = async () => {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/players`, {
+      headers: {
+        'authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching players:', error);
+  }
+};
+
+const isPlayerInRoom = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/in_room`, {
       headers: {
         'authorization': `Bearer ${token}`
       }
     });
-
-    if (!response.data) {
-      notification.send("Player not Found in Game", "danger");
-      return router.push('/');
-    }
-
     return response.data;
   } catch (error) {
-    router.push('/');
     console.error('Error fetching room code:', error);
   }
 };
 
 const getUserName = async (player_id) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
 
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id}`, {
@@ -113,8 +95,9 @@ const getUserName = async (player_id) => {
         'authorization': `Bearer ${token}`
       }
     });
-    console.log(response.data);
-    cardTheme.value = response.data.cards;
+    if (cardTheme.value === null) {
+      cardTheme.value = response.data.cards;
+    }
     return response.data.username.charAt(0).toUpperCase() + response.data.username.slice(1);
   } catch (error) {
     console.error('Error fetching get username:', error);
@@ -122,11 +105,6 @@ const getUserName = async (player_id) => {
 };
 
 const getGameTable = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
 
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/table`, {
@@ -143,62 +121,41 @@ const getGameTable = async () => {
 };
 
 const getPlayerHand = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/${player_id.value}/hand`, {
       headers: {
         'authorization': `Bearer ${token}`
       }
     });
-    Loaded.getPlayerHand = true;
     return response.data;
   } catch (error) {
     console.error('Error fetching player hand:', error);
   }
 };
 
-const drawCard = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
+const getTurnWinner = async () => {
   try {
-    const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/draw`, {}, {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${route.params.code}/turn_winner`, {
       headers: {
         'authorization': `Bearer ${token}`
       }
     });
-    player_hand.value.push(response.data);
     return response.data;
   } catch (error) {
-    console.error('Error drawing card:', error);
+    console.error('Error fetching winner:', error);
   }
 };
 
-const getUserID = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
+const endGame = async () => {
   try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
+    const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/end`, {}, {
       headers: {
         'authorization': `Bearer ${token}`
       }
     });
-    console.log(response.data);
     return response.data;
   } catch (error) {
-    console.error('Error fetching get user id:', error);
+    console.error('Error ending game:', error);
   }
 };
 
@@ -207,33 +164,57 @@ const updateGameTable = async (card) => {
   player_hand.value = await getPlayerHand();
   socket.value.emit('playCard', route.params.code, player_id.value);
   card_disabled.value = true;
+  if (table_cards.value.length >= players.value.length) {
+    const turnWinner = await getTurnWinner();
+    if (player_hand.value.length === 0) {
+      console.log("Game Ended");
+      await endGame();
+      router.push(`/leaderboard/${route.params.code}`);
+      socket.value.emit('endGame', route.params.code);
+    }
+  }
   await updateTurnInfo();
 };
 
 const updateTurnInfo = async () => {
-  table_cards.value = await getGameTable();
+  await new Promise(resolve => setTimeout(resolve, 500));
+  players.value = await getPlayers();
   turn_player_id.value = await getRoom();
   turn_player_id.value = turn_player_id.value.turn_player_id;
   player_hand.value = await getPlayerHand();
+  table_cards.value = await getGameTable();
+  checkPlayerPoints();
   if (player_id.value == turn_player_id.value) {
     card_disabled.value = false;
     turn_player_name.value = "Your";
+    if (cookies) {
+      playSound("your_turn");
+    }
   } else {
     turn_player_name.value = await getUserName(turn_player_id.value) + "'s";
   }
 };
 
-const isAllLoaded = () => {
-  if (Loaded.getRoom && Loaded.getGameTable && Loaded.getPlayerHand) {
-    return true;
-  }
+const checkPlayerPoints = () => {
+  players.value.forEach(player => {
+    if (player.user_id === player_id.value && player.points > 0) {
+      return playerPoints.value = true;
+    }
+  });
 };
 
 onMounted(async () => {
-  player_id.value = getUserID();
-  turn_player_id.value = getRoom();
-  turn_player_id.value = turn_player_id.value.turn_player_id;
+  player_id.value = await getUserID();
   await updateTurnInfo();
+  players.value = await getPlayers();
+
+  if (!await isPlayerInRoom()) {
+    if (cookies) {
+      playSound("wrong");
+    }
+    router.push('/');
+  }
+  player_hand.value = await getPlayerHand();
 
   socket.value = io(`http://${window.location.hostname}:8000`);
 
@@ -241,13 +222,19 @@ onMounted(async () => {
   socket.value.emit('joinGame', route.params.code);
 
   socket.value.on('turnPassed', async (player_id) => {
-    drawCard();
     await updateTurnInfo();
   });
 
   socket.value.on('cardPlayed', async (player_id) => {
     await updateTurnInfo();
     socket.value.emit('passTurn', route.params.code, player_id);
+  });
+
+  socket.value.on('gameEnded', async () => {
+    if (cookies) {
+      // playSound("game_end"); @todo Add sound
+    }
+    router.push(`/leaderboard/${route.params.code}`);
   });
 });
 
@@ -257,28 +244,29 @@ onUnmounted(async () => {
 </script>
 
 <template>
-  <section v-if="isAllLoaded" class="game-container">
+  <section class="game-container">
     <header>
       <h2>{{ turn_player_name }} Turn</h2>
     </header>
     <section class="game-table-container">
-      <CARD v-for="card in table_cards" :cardTheme="cardTheme" :number="card.number" :seed="card.seed" disabled></CARD>
+      <CARD v-for="card in table_cards" :cardTheme="cardTheme" :number="card.number" :seed="card.seed"></CARD>
+      <img v-if="playerPoints" src="https://imgur.com/ytekpOg.png" alt="Win Cards" />
     </section>
     <footer>
       <section class="players-cards">
-        <CARD v-for="card in player_hand" :cardTheme="cardTheme" :number="card.number" :seed="card.seed" :disabled="card_disabled"
-          @playCard="updateGameTable"></CARD>
+        <CARD v-for="card in player_hand" :cardTheme="cardTheme" :number="card.number" :seed="card.seed"
+          :disabled="card_disabled" @playCard="updateGameTable"></CARD>
       </section>
     </footer>
   </section>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 img {
   padding: 5px;
   background-color: var(--white-color);
   border-radius: 15px;
-  border: 3px solid var(--primary-color);
+  border: 3px solid var(--white-color);
   width: 5rem;
   height: auto;
 }
@@ -289,6 +277,7 @@ img {
 
 header {
   background-color: var(--secondary-color);
+  z-index: 2;
 }
 
 h2 {
@@ -301,13 +290,23 @@ h2 {
   justify-content: center;
   align-items: center;
   gap: 50px;
-  height: calc(70vh - 2vh - 2vh - 4vh);
+  height: calc(85vh - 2vh - 2vh - 4vh);
   background-color: var(--game-color);
 
   section {
     display: flex;
     flex-direction: column;
     gap: 50px;
+
+  }
+
+  img {
+    position: absolute;
+    bottom: 15vh;
+    right: 1vw;
+    width: 6rem;
+    background-color: transparent;
+    border: none;
   }
 }
 
@@ -316,7 +315,6 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 50px;
-  background-color: var(--secondary-color);
   padding: 4vh 0;
 }
 
@@ -324,5 +322,9 @@ footer {
   left: 0;
   width: 100%;
   bottom: 0;
+  min-height: 22vh;
+  border-radius: 15px 15px 0 0;
+  background-color: var(--primary-color);
+  box-shadow: var(--box-shadow-up);
 }
 </style>

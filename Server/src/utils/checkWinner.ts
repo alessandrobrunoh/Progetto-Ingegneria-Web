@@ -1,6 +1,6 @@
-export const checkWinner = (b_seed: String, f_number: number, f_seed: String, p_number: number, p_seed: String) => {
+export const checkWinner = (b_seed: String, f_number: number, f_seed: String, p_number: number, p_seed: String, player_id: String, first_id: String) => {
   if (p_seed === f_seed && p_number === f_number) {
-    return { player: "draw", value: 0 };
+    return { player: "draw", points: 0 };
   }
   let p_value = 0;
   switch (p_number) {
@@ -48,22 +48,23 @@ export const checkWinner = (b_seed: String, f_number: number, f_seed: String, p_
 
   if (p_seed === f_seed) {
     if (p_value > f_value) {
-      //   return { seed: p_seed, value: p_value, number: p_number };
-      return { player: "player", value: p_value + f_value };
+      return { player: player_id, points: p_value + f_value };
     } else if (p_value < f_value) {
-      return { player: "first", value: p_value + f_value };
+      return { player: first_id, points: p_value + f_value };
     } else {
       if (p_number > f_number) {
-        return { player: "player", value: p_value + f_value };
+        return { player: player_id, points: p_value + f_value };
       } else {
-        return { player: "first", value: p_value + f_value };
+        return { player: first_id, points: p_value + f_value };
       }
     }
   } else {
     if (p_seed === b_seed && f_seed !== b_seed) {
-      return { player: "player", value: p_value + f_value };
+      return { player: player_id, points: p_value + f_value };
     } else if(p_seed !== b_seed && f_seed === b_seed) {
-      return { player: "first", value: p_value + f_value };
+      return { player: first_id, points: p_value + f_value };
+    } else {
+      return { player: first_id, points: p_value + f_value };
     }
   }
 }

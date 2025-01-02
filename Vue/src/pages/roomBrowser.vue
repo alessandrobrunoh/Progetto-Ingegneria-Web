@@ -1,33 +1,28 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeMount } from "vue";
 import axios from "axios";
 import { notification } from "@/assets/js/notificationEvent.js";
 import BROWSEBOX from "./components/browseBox.vue";
 import BUTTON from "./components/Button.vue";
+import { getToken } from "../assets/js/getToken";
 
 const rooms = ref([]);
+const token = getToken();
 const filteredRooms = ref([]);
-const showWaitingOnly = ref(false);
 
 const getRooms = async () => {
-  try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    if (response.data === "Logged out successfully") {
-      notification.send("Logged out Successfully", "success");
-      localStorage.removeItem('token');
-      router.push('/sign-up');
-      return [];
+    try {
+        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
+            headers: {
+                'authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        notification.send("Error fetching rooms", "danger");
+        return [];
     }
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching rooms:', error);
-    notification.send("Error fetching rooms", "danger");
-    return [];
-  }
 };
 
 // Funzione per ottenere tutte le stanze e i giocatori
@@ -35,7 +30,7 @@ const getRoomsPlayers = async (code) => {
     try {
         const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code}/players`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'authorization': `Bearer ${token}`
             }
         });
         return response.data;
@@ -50,7 +45,7 @@ const deleteRoom = async (roomCode) => {
     try {
         await axios.delete(`http://${window.location.hostname}:8000/api/room/${roomCode}/delete`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'authorization': `Bearer ${token}`
             }
         });
         return response.data;
@@ -62,10 +57,6 @@ const deleteRoom = async (roomCode) => {
 // Funzione per controllare e cancellare stanze con 0 giocatori
 const checkAndDeleteEmptyRooms = async () => {
     const rooms = await getRooms();
-    if (!Array.isArray(rooms)) {
-        console.error('Rooms is not an array');
-        return;
-    }
     for (const room of rooms) {
         const players = await getRoomsPlayers(room.code);
         if (players.length === 0) {
@@ -78,16 +69,21 @@ const checkAndDeleteEmptyRooms = async () => {
 const refreshRooms = async () => {
     await checkAndDeleteEmptyRooms();
     rooms.value = await getRooms();
+    filteredRooms.value = [];
+    for (const room of rooms.value) {
+        if (room.status === "waiting") {
+            filteredRooms.value.push(room);
+        }
+    }
 };
 
-// Esegui il controllo delle stanze vuote al montaggio del componente
-onMounted(async () => {
-  await checkAndDeleteEmptyRooms();
-  rooms.value = await getRooms();
-  setInterval(async () => {
-    await checkAndDeleteEmptyRooms();
-    rooms.value = await getRooms();
-  }, 10000);
+// Esegui il controllo delle stanze vuote al montaggio del componente 
+onBeforeMount(async () => {
+    await refreshRooms();
+
+    setInterval(async () => {
+        await refreshRooms();
+    }, 10000);
 });
 </script>
 
@@ -100,7 +96,7 @@ onMounted(async () => {
             </BUTTON>
         </div>
         <ul>
-            <BROWSEBOX v-for="room in rooms" :key="room.code" :code="room.code" :status="room.status" />
+            <BROWSEBOX v-for="room in filteredRooms" :key="room.code" :code="room.code"/>
         </ul>
     </section>
 </template>
@@ -109,8 +105,9 @@ onMounted(async () => {
 .browser-container {
     display: flex;
     flex-direction: column;
-    padding: 5vh 15vw;
+    padding: 5vh 5vw;
     gap: 20px;
+    width: 50%;
 }
 
 ul {
@@ -130,6 +127,7 @@ button {
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
+    width: 20%;
 }
 
 .refresh-button {

@@ -3,9 +3,11 @@ import { defineProps, defineEmits } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { notification } from "@/assets/js/notificationEvent.js";
+import { getToken } from "@/assets/js/getToken.js";
 
 const route = useRoute();
 const emits = defineEmits();
+const token = getToken();
 
 const props = defineProps({
   number: {
@@ -33,17 +35,12 @@ const handleClick = async () => {
   if (props.disabled) {
     return;
   }
+  emits('cardPlayed'); // Emetti l'evento quando una carta viene giocata
   await playCard();
   await passTurn();
 };
 
 const playCard = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/play/${props.number}/${props.seed}`, {}, {
       headers: {
@@ -54,17 +51,10 @@ const playCard = async () => {
     return response.data;
   } catch (error) {
     console.error('Error playing card:', error);
-    notification.send("Error playing card:", "danger");
   }
 };
 
 const passTurn = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    console.error('Authorization token is missing');
-    return;
-  }
-
   try {
     const response = await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/pass`, {}, {
       headers: {
@@ -75,23 +65,21 @@ const passTurn = async () => {
     return response.data;
   } catch (error) {
     console.error('Error passing turn:', error);
-    notification.send("Error passing turn:", "danger");
   }
 };
 </script>
 
 <template>
-  <section class="card-container" @click="handleClick" :class="{ disabled: disabled }">
-    <img :src="`/assets/img/cards/${cardTheme}/${number}_${seed}.svg`" alt="Card" />
+  <section class="card-container" @click="handleClick" :class="{ disabled: props.disabled }">
+    <img :src="`/assets/img/cards/${props.cardTheme}/${props.number}_${props.seed}.svg`" alt="Card" />
   </section>
 </template>
 
 <style scoped>
 img {
-  width: 4rem;
+  width: 4.5rem;
   border-radius: 10px;
   background-color: var(--white-color);
-  border: 3px solid var(--primary-color);
   padding: 5px;
   box-shadow: var(--box-shadow);
   cursor: pointer;
@@ -101,5 +89,4 @@ img {
   opacity: 0.5;
   cursor: not-allowed !important;
 }
-
 </style>

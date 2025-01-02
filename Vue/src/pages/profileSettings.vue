@@ -13,7 +13,7 @@ const email = ref("");
 const password = ref("");
 const avatar = ref("");
 const theme = ref("");
-const cards = ref("");
+const cardTheme = ref("");
 const music = ref("");
 const router = useRouter();
 const player_id = ref(null);
@@ -71,7 +71,7 @@ const getUser = async () => {
         avatar.value = response.data.avatar;
         imageLoaded.value = true;
         theme.value = response.data.theme;
-        cards.value = response.data.cards;
+        cardTheme.value = response.data.cards;
         music.value = response.data.music;
         if(music.value === 1) {
             music.value = true;
@@ -93,14 +93,17 @@ const saveProfile = async () => {
     }
 
     try {
-        const response = await await axios.post(`http://${window.location.hostname}:8000/api/user/profile/${username.value}/${email.value}/${password.value}/${theme.value}/${avatar.value}/${cards.value}/${music.value}/save`, {}, {
+        const response = await await axios.post(`http://${window.location.hostname}:8000/api/user/profile/${username.value}/${email.value}/${password.value}/${theme.value}/${avatar.value}/${cardTheme.value}/${music.value}/save`, {}, {
             headers: {
                 'authorization': `Bearer ${token}`
             }
         });
         Cookies.set('music', music.value);
-        window.location.reload();
         notification.send("Profile saved successfully", "success");
+        router.push('/');
+        setTimeout(() => {
+            window.location.reload();
+        }, 150);
         return response.data;
     } catch (error) {
         notification.send("Error " + error, "danger");
@@ -151,7 +154,9 @@ onMounted(async () => {
                 <option value="Light">Light</option>
                 <option value="Dark">Dark</option>
                 <option value="Barbie">Barbie</option>
-                <option value="Camo">Camo</option>
+                <option value="Aloe">Aloe</option>
+                <option value="Cartoon">Cartoon</option>
+                <option value="Autumn">Autumn</option>
             </select>
         </div>
         <div class="input-group">

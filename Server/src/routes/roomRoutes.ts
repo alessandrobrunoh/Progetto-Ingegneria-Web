@@ -18,9 +18,10 @@ import {
   endGame,
   playCard,
   passTurn,
-  drawCard,
+  getLeaderboard,
   giveUp,
-  getLastCard,
+  getBriscola,
+  getTurnWinner,
 } from "../controllers/roomController";
 
 router.use(checkAuth);
@@ -131,11 +132,18 @@ router.post("/:code/player/play/:number/:seed", playCard);
 router.post("/:code/player/pass", passTurn);
 
 /**
- * @route POST /rooms/:code/players/:player_id/draw
- * @description Permette a un giocatore di pescare una carta in una stanza specifica tramite ROOM_ID e PLAYER_ID.
- * @access Private
+ * @route POST /rooms/:code/turn_winner
+ * @description Ottiene il vincitore del turno in una stanza specifica tramite ROOM_ID.
+ * @access Privates
  */
-router.post("/:code/player/draw", drawCard);
+router.get("/:code/turn_winner", getTurnWinner);
+
+/**
+ * @route GET /rooms/:code/leaderboard
+ * @description Ottiene la classifica di una stanza specifica tramite ROOM_ID.
+ * @access Private
+ */ 
+router.get("/:code/leaderboard", getLeaderboard);
 
 /**
  * @route POST /rooms/:code/player/give_up
@@ -145,10 +153,10 @@ router.post("/:code/player/draw", drawCard);
 router.post("/:code/player/give_up", giveUp);
 
 /**
- * @route GET /rooms/:code/last_card
- * @description Ottiene l'ultima carta giocata in una stanza specifica tramite ROOM_ID.
+ * @route GET /rooms/:code/briscola
+ * @description Ottiene la briscola in una stanza specifica tramite ROOM_ID.
  * @access Private
  */
-router.get("/:code/last_card", getLastCard);
+router.get("/:code/briscola", getBriscola);
 
 export default router;

@@ -23,6 +23,9 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
 
+    // Converti il username in minuscolo
+    const lowerCaseUsername = username.toLowerCase();
+
     if (!username || !password) {
       res.status(400).send("Username and password are required");
       return;
@@ -30,7 +33,7 @@ export const login = async (req: Request, res: Response) => {
 
     const sql = "SELECT * FROM users WHERE username = ?";
     const connection = await connect();
-    const [rows]: any = await connection.execute(sql, [username]);
+    const [rows]: any = await connection.execute(sql, [lowerCaseUsername]);
 
     if (rows.length === 0) {
       return res.status(404).send("User not found");
@@ -72,7 +75,21 @@ export const login = async (req: Request, res: Response) => {
  */
 export const register = async (req: Request, res: Response) => {
   try {
+    const connection = await connect();
     const { username, password, email } = req.body;
+
+    // Converti il username in minuscolo
+    const lowerCaseUsername = username.toLowerCase();
+
+    // Verifica se l'username esiste già
+    const [rows]: any = await connection.execute(
+      "SELECT * FROM users WHERE username = ?",
+      [lowerCaseUsername]
+    );
+
+    if (rows.length > 0) {
+      return res.status(400).send("Username already exists");
+    }
 
     if (!username || !password || !email) {
       res.status(400).send("Username, password and email are required");
@@ -102,8 +119,7 @@ export const register = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 8);
     const sql =
       "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-    const connection = await connect();
-    await connection.execute(sql, [username, hashedPassword, email]);
+    await connection.execute(sql, [lowerCaseUsername, hashedPassword, email]);
 
     res.status(201).send("User created");
   } catch (error) {
@@ -126,10 +142,14 @@ export const register = async (req: Request, res: Response) => {
  * @throws Restituirà un codice di stato 401 se il token è mancante o invalido.
  *         Restituirà un codice di stato 500 se la chiave segreta JWT non è definita o si verifica un errore durante l'elaborazione.
  */
-export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
+export const checkAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const token = req.headers.authorization?.split(" ")[1];
   try {
-    if (!token || token === '') {
+    if (!token || token === "") {
       console.log("Authorization token is missing or empty");
       return res.status(401).send("Unauthorized");
     }
@@ -154,7 +174,7 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
           return res.status(403).send("Invalid token.");
         }
       }
-      
+
       next();
     });
   } catch (error) {

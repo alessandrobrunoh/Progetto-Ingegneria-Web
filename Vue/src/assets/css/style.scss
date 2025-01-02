@@ -19,8 +19,9 @@
   --dark-danger-color: #701f21;
   --light-danger-color: #db4f51;
   --box-shadow: 0 4px 4px rgb(0 0 0 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
-:root body[theme="ble"] {
+:root body[theme="Cartoon"] {
   --primary-color: #7676f2;
   --secondary-color: #f7f0ce;
   --danger-color: #D05353;
@@ -38,7 +39,7 @@
   --dark-danger-color: #a10316;
   --light-danger-color: rgb(241, 57, 79);
 }
-:root body[theme="senzaNome"] {
+:root body[theme="Autumn"] {
   --primary-color: #c75102;
   --secondary-color: rgb(254, 237, 169);
   --danger-color: #990066;
@@ -58,10 +59,10 @@
 }
 
 :root body[theme="Barbie"] {
-  --primary-color: #FF69B4;
+  --primary-color: #ff7ebf;
   --secondary-color: #fbdee2;
   --danger-color: #e3489b;
-  --gold-color: #FFD700;
+  --gold-color: #c5b140;
   --silver-color: #C0C0C0;
   --success-color: #fc7f92;
   --game-color: #FF69B4;
@@ -73,14 +74,15 @@
   --grey-color: #D3D3D3;
   --dark-danger-color: #C71585;
   --light-danger-color: #FF69B4;
-  --box-shadow: 0 4px 4px rgb(255 20 147 / 20%);
+  --box-shadow: 0 4px 4px rgb(0 0 0 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Sky"] {
   --primary-color: #1E90FF;
   --secondary-color: #c0dfea;
   --danger-color: #FF4500;
-  --gold-color: #FFD700;
+  --gold-color: #e6d056;
   --silver-color: #C0C0C0;
   --success-color: #32CD32;
   --game-color: #4682B4;
@@ -93,14 +95,15 @@
   --dark-danger-color: #8B0000;
   --light-danger-color: #FF6347;
   --box-shadow: 0 4px 4px rgb(30 144 255 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Purple"] {
   --primary-color: #800080;
   --secondary-color: #D8BFD8;
   --danger-color: #8B0000;
-  --gold-color: #FFD700;
-  --silver-color: #C0C0C0;
+  --gold-color: rgb(155, 157, 16);
+  --silver-color: #848181;
   --success-color: #9370DB;
   --game-color: #6A0DAD;
   --link-color: #9400D3;
@@ -112,13 +115,14 @@
   --dark-danger-color: #4B0082;
   --light-danger-color: #BA55D3;
   --box-shadow: 0 4px 4px rgb(128 0 128 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Aloe"] {
-  --primary-color: #2E8B57;
+  --primary-color: rgb(50, 177, 105);
   --secondary-color: #cdfccd;
   --danger-color: #FF6347;
-  --gold-color: #FFD700;
+  --gold-color: #f2d94b;
   --silver-color: #C0C0C0;
   --success-color: #3CB371;
   --game-color: #2E8B57;
@@ -131,6 +135,7 @@
   --dark-danger-color: #8B0000;
   --light-danger-color: #FF7F50;
   --box-shadow: 0 4px 4px rgb(46 139 87 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Rusty"] {
@@ -150,6 +155,7 @@
   --dark-danger-color: #8B0000;
   --light-danger-color: #FFA07A;
   --box-shadow: 0 4px 4px rgb(255 165 0 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Dark"] {
@@ -169,6 +175,7 @@
   --dark-danger-color: #701f21;
   --light-danger-color: #db4f51;
   --box-shadow: 0 4px 4px rgb(30 30 30 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="Light"] {
@@ -188,13 +195,14 @@
   --dark-danger-color: #701f21;
   --light-danger-color: #db4f51;
   --box-shadow: 0 4px 4px rgb(240 240 240 / 20%);
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 :root body[theme="ColorBlind"] {
   --primary-color: rgb(62, 62, 255); 
   --secondary-color: #FFFF00; 
   --danger-color: #8a0a8a; 
-  --gold-color: #FFD700; 
+  --gold-color: #ae7400; 
   --silver-color: #C0C0C0; 
   --success-color: #fea013; 
   --game-color: #FFA500; 
@@ -207,6 +215,7 @@
   --dark-danger-color: #8B008B; /* Dark Magenta */
   --light-danger-color: #FFA500; /* Orange */
   --box-shadow: 0 4px 4px rgb(0 0 255 / 20%); /* Blue */
+  --box-shadow-up: 0 -4px 10px rgb(0 0 0 / 20%);
 }
 
 * {
@@ -228,6 +237,7 @@ header {
   position: fixed;
   align-items: center;
   padding: 1vh 2vw;
+  border-radius: 0 0 15px 15px;
   color: var(--secondary-color);
   width: 100%;
   background-color: var(--dark-secondary-color);

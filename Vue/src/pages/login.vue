@@ -12,9 +12,9 @@ const username = ref('');
 const password = ref('');
 const router = useRouter();
 
-const music = Cookies.get('music');
-if (!music) {
-  music = false;
+const cookies = Cookies.get('music');
+if (!cookies) {
+  Cookies.set('music', 'true');
 }
 
 const isAuthenticated = () => {
@@ -40,17 +40,17 @@ const handleSignIn = async () => {
     if (response.data.token) {
       localStorage.setItem('token', response.data.token); // Store token
 
-      if (music) {
+      if (cookies) {
         playSound('success');
       }
-      notification.send('Logged in successfully', 'success');
+      notification.send('Logged in successfully, Redirecting...', 'success');
       router.push('/');
     } else {
       console.error('No token received');
     }
   } catch (error) {
     if (error.response && error.response.data) {
-      if (music) {
+      if (cookies) {
         playSound('wrong');
       }
       notification.send('Invalid username or password', 'danger');
@@ -61,7 +61,7 @@ const handleSignIn = async () => {
 
 <template>
   <section class="auth-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo" />
+    <img src="https://i.imgur.com/v9LaPxu.png" alt="Briscola logo" />
     <section class="input-container">
       <INPUT v-model="username" placeholder="Username" type="username" @keypress="handleKeyPress" />
       <INPUT v-model="password" placeholder="Password" type="password" @keypress="handleKeyPress" />
@@ -89,7 +89,7 @@ a {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 30px;
   height: 90vh;
 }
 

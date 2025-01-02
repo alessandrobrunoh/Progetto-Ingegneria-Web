@@ -30,6 +30,7 @@ export default {
 </template>
 
 <style scoped>
+
 .box {
   display: flex;
   align-items: center;

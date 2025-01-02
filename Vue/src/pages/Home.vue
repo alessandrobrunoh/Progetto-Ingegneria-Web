@@ -1,6 +1,6 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
-import { onMounted, ref } from 'vue';
+import { onActivated, onMounted, ref } from 'vue';
 import BUTTON from "@/pages/components/Button.vue";
 import CODEINPUT from "@/pages/components/CodeInput.vue";
 import { useRouter } from 'vue-router';
@@ -40,29 +40,42 @@ const rules = () => {
 
 <template>
   <section class="menu-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo"/>
-    <BUTTON @click="browseRooms" color="link">BROWSE ROOMS</BUTTON>
-    <BUTTON @click="createRoom" color="danger">CREATE A ROOM</BUTTON>
-    <BUTTON v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</BUTTON>
-    <div v-else>
-      <CODEINPUT v-model="code"/>
-    </div>
-    <BUTTON @click="rules">RULES</BUTTON>
+    <img src="https://i.imgur.com/v9LaPxu.png" alt="Vue logo" />
+    <section class="options-container">
+      <BUTTON @click="browseRooms" color="link">BROWSE ROOMS</BUTTON>
+      <BUTTON @click="createRoom" color="danger">CREATE A ROOM</BUTTON>
+      <BUTTON v-if="joinButton" @click="switchJoinButton" color="success">JOIN A ROOM</BUTTON>
+      <div v-else>
+        <CODEINPUT v-model="code" />
+      </div>
+      <BUTTON @click="rules">RULES</BUTTON>
+    </section>
   </section>
 </template>
 
 <style scoped>
-.menu-container {
+.options-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 80vh;
-  padding: 5vh 15vw;
+  padding: 10vh 15vw;
   gap: 20px;
+}
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10vh 0;
 }
 
 button {
   border-radius: 15px !important;
+}
+
+img {
+  width: 15rem;
+  height: auto;
 }
 </style>

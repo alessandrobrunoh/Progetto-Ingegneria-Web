@@ -18,7 +18,7 @@ const routes = [
     { path: '/sign-up', component: register },
     { path: '/room/:code', component: Room, meta: { requiresAuth: true } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true }},
-    { path: '/leaderboard', component: Leaderboard, meta: { requiresAuth: true }},
+    { path: '/leaderboard/:code', component: Leaderboard, meta: { requiresAuth: true }},
     { path: '/game/:code', component: Game},
     { path: '/profile/settings', component: Settings, meta: { requiresAuth: true }},
     { path: '/rules', component: Rules, meta: { requiresAuth: true }},

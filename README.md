@@ -35,6 +35,10 @@
 
 
 @todo inizialmente non ti dice la briscola, solo se ricarichi la pagina
+@todo inizialmente non ti fa vedere avatar nella Home, solo se ricarichi la pagina
 @todo Mettere che ti compare un mazzetto fittizzio di carte per farti capire che stai guadagnando punti
-@todo Mettere che quando é il tuo turno ti fa un suono
-@todo se la room é iniziata non devi piu poter entrare nella Room
+@todo delay prima di pulire il tavolo
+@todo a volte da i punti alla persona sbagliata
+@todo quando parte il countdown a tutti si deve stoppare la musica di waiting
+@todo aggiungere suoni vittoria, sconfitta + quando è il tuo turno
+@todo puoi giocare al massimo una carta

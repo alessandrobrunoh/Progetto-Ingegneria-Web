@@ -9,6 +9,7 @@ import BUTTON from "./components/Button.vue";
 import { notification } from "../assets/js/notificationEvent";
 import { playSound, stopSound, stopAllSounds } from "../assets/js/playSound";
 import Cookies from "js-cookie";
+import { getToken } from "../assets/js/getToken";
 
 const route = useRoute();
 const router = useRouter();
@@ -18,7 +19,7 @@ const isGameStarted = ref(false);
 const countdown = ref(-1);
 const isHost = ref(false);
 const socket = ref(io(`http://${window.location.hostname}:8000`));
-
+const token = getToken();
 const cookies = Cookies.get("music");
 if (!cookies) {
   Cookies.set("music", true);
@@ -30,13 +31,6 @@ if (!cookies) {
  * @returns Un Json con il codice della stanza.
  */
 const getRoom = async () => {
-  // Recupera il token dal localStorage
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("Authorization token is missing");
-    return;
-  }
-
   try {
     // Effettua la richiesta API utilizzando il token nell'header di autorizzazione
     const response = await axios.get(
@@ -54,6 +48,10 @@ const getRoom = async () => {
     if (response.data.length === 0) {
       return router.push("/");
     }
+    if(response.data.status === "in_progress") {
+      router.push("/game/" + code.value);
+    }
+    return response.data;
   } catch (error) {
     router.push("/");
     console.error("Error fetching room code:", error);
@@ -66,11 +64,6 @@ const getRoom = async () => {
  * @returns Un Json con la lista dei giocatori.
  */
 const getPlayers = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("Authorization token is missing");
-    return;
-  }
 
   try {
     const response = await axios.get(
@@ -139,11 +132,6 @@ const getUser = async (playerId) => {
  * Funzione asincrona per uscire dalla stanza.
  */
 const leaveRoom = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("Authorization token is missing");
-    return;
-  }
   try {
     const response = await axios.delete(
       `http://${window.location.hostname}:8000/api/room/${code.value}/leave`,
@@ -164,11 +152,6 @@ const leaveRoom = async () => {
  * Questa funzione asincrona gestisce la logica per eliminare una stanza.
  */
 const deleteRoom = async () => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("Authorization token is missing");
-    return;
-  }
 
   try {
     await axios.delete(
@@ -244,14 +227,9 @@ const startGame = async () => {
       playSound("wrong");
     }
     notification.send(
-      "Devi avere almeno 2 o 4 giocatori per iniziare il gioco",
+      "Devi avere almeno 2 giocatori per iniziare il gioco",
       "danger"
     );
-    return;
-  }
-  const token = localStorage.getItem("token");
-  if (!token) {
-    console.error("Authorization token is missing");
     return;
   }
 
@@ -295,11 +273,7 @@ const getButtonColor = () => {
   }
 };
 
-/**
- * Aggiorna i nomi dei giocatori.
- * Questa funzione è asincrona e si occupa di aggiornare i nomi dei giocatori
- * nella stanza corrente.
- */
+
 const updatePlayerNames = async () => {
   for (const player of players.value) {
     player.name = await getUser(player.user_id);
@@ -308,8 +282,7 @@ const updatePlayerNames = async () => {
 
 onMounted(async () => {
   if (!(await isUserInRoom())) {
-    router.push("/");
-    return;
+    return router.push("/");
   }
 
   if (cookies === "true") {
@@ -364,7 +337,7 @@ onUnmounted(async () => {
     await deleteRoom();
   }
 
-  if (isPlayerHost()) {
+  if (isPlayerHost() && !isGameStarted.value) {
     socket.value.emit("hostLeft", code.value);
   } else {
     socket.value.emit("leaveRoom", code.value, players.value[0].name);
@@ -385,8 +358,7 @@ onUnmounted(async () => {
             color="success"
             :avatar="player.avatar"
             :host="player.host"
-            >{{ player?.name }}</TEAMBOX
-          >
+            >{{ player?.name }}</TEAMBOX>
         </section>
       </section>
       <section v-if="players.filter((p) => p?.team === 2).length > 0">
@@ -398,8 +370,7 @@ onUnmounted(async () => {
             color="success"
             :avatar="player.avatar"
             :host="player.host"
-            >{{ player?.name }}</TEAMBOX
-          >
+            >{{ player?.name }}</TEAMBOX>
         </section>
       </section>
     </section>

@@ -1,27 +1,25 @@
 <script setup>
 import { notification } from "@/assets/js/notificationEvent.js";
-</script>
+import { computed, watch } from 'vue';
+import { defineProps } from 'vue';
+import { playSound } from "@/assets/js/playSound.js";
 
-<script>
-export default {
-  name: "podium",
-  props: {
-    winner: {
-      type: Boolean,
-    },
-    team: {
-      type: String,
-    },
-    points: {
-      type: Number,
-    }
+const props = defineProps({
+  winner: {
+    type: Boolean,
   },
-  computed: {
-    boxHeight() {
-      return `${15 + this.points / 3}vh`; // Calcola l'altezza in base ai punti con un minimo di 15vh
-    }
+  team: {
+    type: String,
+  },
+  points: {
+    type: Number,
   }
-}
+});
+
+const boxHeight = computed(() => {
+  return `${15 + props.points / 6}vh`; // Calcola l'altezza in base ai punti con un minimo di 15vh
+});
+
 </script>
 
 <template>
@@ -30,14 +28,14 @@ export default {
     <h2>{{ team }}</h2>
     <div class="box" :winner="winner" :style="{ height: boxHeight }">
       <h2>{{ points }}</h2>
-      <p>points</p>
+      <p>Points</p>
     </div>
   </section>
 </template>
 
 <style scoped>
 .box {
-  padding: 15px;
+  padding: 10px;
   border: 0 solid;
   border-radius: 15px 15px 0 0;
   width: 100%;
@@ -50,18 +48,22 @@ export default {
   align-items: center;
 }
 
+i {
+  width: 4rem;
+}
+
 p {
   font-size: 1.2rem;
 }
 
 .box[winner="true"] {
   background-color: var(--gold-color);
-  padding: 2vh 10vw;
+  padding: 2vh 9vw;
 }
 
 .box[winner="false"] {
   background-color: var(--silver-color);
-  padding: 2vh 10vw;
+  padding: 2vh 9vw;
 }
 
 .podium-container {
