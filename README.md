@@ -34,11 +34,6 @@
 - SQL Injection (non srcivere le SQL)
 
 
-@todo inizialmente non ti dice la briscola, solo se ricarichi la pagina
-@todo inizialmente non ti fa vedere avatar nella Home, solo se ricarichi la pagina
-@todo Mettere che ti compare un mazzetto fittizzio di carte per farti capire che stai guadagnando punti
-@todo delay prima di pulire il tavolo
-@todo a volte da i punti alla persona sbagliata
-@todo quando parte il countdown a tutti si deve stoppare la musica di waiting
-@todo aggiungere suoni vittoria, sconfitta + quando è il tuo turno
+
+@todo delay prima di pulire il tavol
 @todo puoi giocare al massimo una carta

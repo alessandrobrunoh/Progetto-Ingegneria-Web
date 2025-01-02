@@ -512,6 +512,11 @@ export const startGame = async (req: Request, res: Response) => {
       [code]
     );
 
+    await connection.execute(
+      "UPDATE rooms SET next_number = ?, next_seed = ? WHERE code = ?",
+      [deck[0].number, deck[0].seed, code]
+    );
+
     for (let i = 0; i < players.length; i++) {
       for (let j = 0; j < 3; j++) {
         drawCard(code, players[i].user_id);
@@ -794,8 +799,6 @@ export const getTurnWinner = async (req: Request, res: Response) => {
       [code]
     );
 
-    console.log("Briasco:", briscola[0]);
-
     const [players]: any = await connection.execute(
       "SELECT * FROM players WHERE room_code = ?",
       [code]
@@ -842,16 +845,6 @@ export const getTurnWinner = async (req: Request, res: Response) => {
         table[0].player_id
       );
 
-      console.log("*******");
-      console.log("First card Number:", table[0].number);
-      console.log("First card Seed:", table[0].seed);
-      console.log("First ID:", table[0].player_id);
-      console.log("*******");
-      console.log("Player card Number:", table[i].number);
-      console.log("Player card Seed:", table[i].seed);
-      console.log("Player ID:", table[i].player_id);
-      console.log("Turn winner:", turnWinner);
-
       await connection.execute(
         "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
         [turnWinner.points, turnWinner.player, code]
@@ -870,6 +863,7 @@ export const getTurnWinner = async (req: Request, res: Response) => {
           const currentPlayerIndex = (turnWinnerIndex + i) % players.length;
           const currentPlayer = players[currentPlayerIndex];
           drawCard(code, currentPlayer.user_id);
+          await new Promise((resolve) => setTimeout(resolve, 300));
           debugPrint(`PlayerID: ${currentPlayer.user_id} drew a card`);
         }
         debugPrint(

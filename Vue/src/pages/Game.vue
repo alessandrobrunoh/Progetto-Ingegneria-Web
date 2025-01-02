@@ -162,10 +162,11 @@ const endGame = async () => {
 const updateGameTable = async (card) => {
   table_cards.value.push(card);
   player_hand.value = await getPlayerHand();
-  socket.value.emit('playCard', route.params.code, player_id.value);
   card_disabled.value = true;
+  socket.value.emit('playCard', route.params.code, player_id.value);
+
   if (table_cards.value.length >= players.value.length) {
-    const turnWinner = await getTurnWinner();
+    await getTurnWinner();
     if (player_hand.value.length === 0) {
       console.log("Game Ended");
       await endGame();
@@ -177,27 +178,17 @@ const updateGameTable = async (card) => {
 };
 
 const updateTurnInfo = async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
   players.value = await getPlayers();
   turn_player_id.value = await getRoom();
   turn_player_id.value = turn_player_id.value.turn_player_id;
   player_hand.value = await getPlayerHand();
   table_cards.value = await getGameTable();
-  checkPlayerPoints();
   if (player_id.value == turn_player_id.value) {
     card_disabled.value = false;
     turn_player_name.value = "Your";
   } else {
     turn_player_name.value = await getUserName(turn_player_id.value) + "'s";
   }
-};
-
-const checkPlayerPoints = () => {
-  players.value.forEach(player => {
-    if (player.user_id === player_id.value && player.points > 0) {
-      return playerPoints.value = true;
-    }
-  });
 };
 
 onMounted(async () => {
@@ -232,9 +223,6 @@ onMounted(async () => {
   });
 
   socket.value.on('gameEnded', async () => {
-    if (cookies) {
-      // playSound("game_end"); @todo Add sound
-    }
     router.push(`/leaderboard/${route.params.code}`);
   });
 });

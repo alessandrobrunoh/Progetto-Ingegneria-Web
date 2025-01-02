@@ -127,7 +127,6 @@ button {
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
-    width: 20%;
 }
 
 .refresh-button {

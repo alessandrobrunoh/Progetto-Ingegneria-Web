@@ -35,7 +35,6 @@ const handleClick = async () => {
   if (props.disabled) {
     return;
   }
-  emits('cardPlayed'); // Emetti l'evento quando una carta viene giocata
   await playCard();
   await passTurn();
 };

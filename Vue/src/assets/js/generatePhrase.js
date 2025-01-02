@@ -55,11 +55,11 @@ export const generatePhrase = (points) => {
   };
   if (points === 0) {
     return phrases[0][Math.floor(Math.random() * phrases[0].length)];
-  } else if (points <= 20) {
+  } else if (points <= 20 && points > 0) {
     return phrases[20][Math.floor(Math.random() * phrases[20].length)];
-  } else if (points <= 40 && points < 58) {
+  } else if (points <= 40 && points > 20) {
     return phrases[40][Math.floor(Math.random() * phrases[40].length)];
-  } else if (points === 58) {
+  } else if (points <= 58) {
     return phrases[58][Math.floor(Math.random() * phrases[58].length)];
   } else if (points === 59) {
     return phrases[59][Math.floor(Math.random() * phrases[59].length)];
@@ -73,5 +73,7 @@ export const generatePhrase = (points) => {
     return phrases[70][Math.floor(Math.random() * phrases[70].length)];
   } else if (points === 120) {
     return phrases[120][Math.floor(Math.random() * phrases[120].length)];
+  } else {
+    return "No phrase available for the given points.";
   }
-};
+}
