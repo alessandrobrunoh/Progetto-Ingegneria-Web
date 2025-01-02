@@ -6,7 +6,7 @@ import { notification } from "@/assets/js/notificationEvent.js";
 import CARD from "./components/Card.vue";
 import TITLES from "./components/Titles.vue";
 import { io } from 'socket.io-client';
-import { playSound } from '../assets/js/playSound';
+import { playSound, stopAllSounds } from '../assets/js/playSound';
 import { getToken } from '../assets/js/getToken';
 import Cookies from 'js-cookie';
 
@@ -187,9 +187,6 @@ const updateTurnInfo = async () => {
   if (player_id.value == turn_player_id.value) {
     card_disabled.value = false;
     turn_player_name.value = "Your";
-    if (cookies) {
-      playSound("your_turn");
-    }
   } else {
     turn_player_name.value = await getUserName(turn_player_id.value) + "'s";
   }
@@ -226,6 +223,10 @@ onMounted(async () => {
   });
 
   socket.value.on('cardPlayed', async (player_id) => {
+    if (cookies) {
+      stopAllSounds();
+      playSound("your_turn");
+    }
     await updateTurnInfo();
     socket.value.emit('passTurn', route.params.code, player_id);
   });

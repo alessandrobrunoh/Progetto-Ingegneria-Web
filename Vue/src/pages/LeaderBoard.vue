@@ -90,7 +90,20 @@ const getTeamName = (team, usernames) => {
 
 const highestPoints = computed(() => {
   if (leaderboard.value.length === 0) return null;
-  return Math.max(...leaderboard.value.map(podium => podium.points));
+  let maxPoints = -Infinity;
+  for (const podium of leaderboard.value) {
+    if (podium.points > maxPoints) {
+      maxPoints = podium.points;
+    }
+  }
+  if(getCurrentUserPoints() === maxPoints) {
+    console.log("victory");
+    playSound("victory");
+  } else {
+    console.log("defeat");
+    playSound("defeat");
+  }
+  return maxPoints;
 });
 
 onBeforeMount(async () => {
@@ -105,13 +118,6 @@ onBeforeMount(async () => {
     notification.send("This room doesn't exist", "danger");
     router.push('/');
     playSound("wrong");
-  }
-  if(getCurrentUserPoints() === highestPoints.value) {
-    console.log("victory");
-    playSound("victory");
-  } else {
-    console.log("defeat");
-    playSound("defeat");
   }
   leaderboard.value = await getLeaderboard();
   const allPlayers = leaderboard.value.flatMap(podium => podium.players);
