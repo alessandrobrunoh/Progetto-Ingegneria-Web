@@ -862,14 +862,6 @@ export const getTurnWinner = async (req: Request, res: Response) => {
       [code]
     );
 
-    if (deck.length === 0) {
-      await connection.execute(
-        "UPDATE rooms SET status = 'ended' WHERE code = ?",
-        [code]
-      );
-      return res.json("Game Ended");
-    }
-
     for (let i = 1; i < table.length; i++) {
       const turnWinner = checkWinner(
         briscola[0].seed,
@@ -913,6 +905,7 @@ export const getTurnWinner = async (req: Request, res: Response) => {
         "UPDATE rooms SET turn_player_id = ? WHERE code = ?",
         [turnWinner.player, code]
       );
+      console.log(deck.length);
       if (deck.length === 2) {
         return res.status(200).json({ turnWinner, message: "Deck is empty" });
       }
