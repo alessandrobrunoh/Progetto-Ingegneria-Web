@@ -610,8 +610,8 @@ export const endGame = async (req: Request, res: Response) => {
       );
 
       await connection.execute( 
-        'UPDATE players SET elo = ? WHERE user_id = ?',
-        [newElo, player.user_id]
+        'UPDATE players SET elo = ? WHERE user_id = ? AND room_code = ?',
+        [newElo, player.user_id, code]
       );
 
       // Update total games and best score
