@@ -42,7 +42,7 @@ export const getUser = async (req: Request, res: Response) => {
 
     const connection = await connect();
     const sql =
-      "SELECT username, email, total_games, wins, best_points, avatar, theme, cards, music FROM users WHERE id = ?";
+      "SELECT username, email, total_games, wins, best_points, avatar, theme, cards, music, elo FROM users WHERE id = ?";
     const [rows]: any = await connection.execute(sql, [id]);
     if (rows.length === 0) {
       return res.status(404).send("User not found");

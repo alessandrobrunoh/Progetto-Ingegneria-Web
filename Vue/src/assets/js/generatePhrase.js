@@ -1,6 +1,6 @@
 export const generatePhrase = (points) => {
   const phrases = {
-    0: ["Really? Not even one?", "GG WP", "GG WP Ez"],
+    0: ["Really? Not even one?", "GG WP", "You didn't even try!"],  
     20: ["Did you even know the rules?"],
     40: [
       "Come on, try harder!",

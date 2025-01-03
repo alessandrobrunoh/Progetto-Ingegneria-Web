@@ -27,7 +27,7 @@ const getUserID = async () => {
   try {
     const response = await axios.get(`http://${window.location.hostname}:8000/api/user`, {
       headers: {
-        ' authorization': `Bearer ${token.value}`
+        'authorization': `Bearer ${token.value}`
       }
     });
     if (response.data === "Logged out Successfully") {

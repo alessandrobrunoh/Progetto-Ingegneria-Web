@@ -146,6 +146,7 @@
 <style>
 .rules-container {
   display: flex;
+  color: var(--primary-color);
   flex-direction: column;
   justify-content: center;
   padding: 5vh 10vw;

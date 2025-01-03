@@ -36,4 +36,6 @@
 
 
 @todo delay prima di pulire il tavol
-@todo puoi giocare al massimo una carta
+@todo puoi giocare al massimo una carta check
+@todo give up
+@todo games History

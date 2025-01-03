@@ -20,6 +20,7 @@ const countdown = ref(-1);
 const isHost = ref(false);
 const socket = ref(io(`http://${window.location.hostname}:8000`));
 const token = getToken();
+const canStart = ref(true);
 const cookies = Cookies.get("music");
 if (!cookies) {
   Cookies.set("music", true);
@@ -48,7 +49,7 @@ const getRoom = async () => {
     if (response.data.length === 0) {
       return router.push("/");
     }
-    if(response.data.status === "in_progress") {
+    if (response.data.status === "in_progress") {
       router.push("/game/" + code.value);
     }
     return response.data;
@@ -245,9 +246,9 @@ const startGame = async () => {
     );
     countdown.value = 3;
     if (cookies === "true") {
+      stopSound("waiting");
       playSound("countdown");
     }
-    stopAllSounds();
     const interval = setInterval(() => {
       countdown.value--;
       if (countdown.value === 0) {
@@ -280,69 +281,79 @@ const updatePlayerNames = async () => {
   }
 };
 
-onMounted(async () => {
-  if (!(await isUserInRoom())) {
-    return router.push("/");
-  }
-
-  if (cookies === "true") {
-    playSound("waiting", true);
-  }
-
-  await getRoom();
-  await getPlayers();
-  await updatePlayerNames();
-  await isPlayerHost();
-  socket.value = io(`http://${window.location.hostname}:8000`);
-
-  socket.value.emit("joinRoom", code.value, players.value[0].name);
-  socket.value.on("playerJoined", async (player) => {
-    await getPlayers();
-    await updatePlayerNames();
-  });
-
-  socket.value.on("playerLeft", async (player) => {
-    await getPlayers();
-    await updatePlayerNames();
-  });
-
-  socket.value.on("hostDelete", async () => {
-    router.push("/");
-  });
-
-  socket.value.on("gameStarted", async () => {
-    countdown.value = 3;
-    if (cookies === "true") {
-      playSound("countdown");
-    }
-    const interval = setInterval(() => {
-      countdown.value--;
-      if (countdown.value === 0) {
-        clearInterval(interval);
-        isGameStarted.value = true;
-        router.push("/game/" + code.value);
-      }
-    }, 1000);
-  });
-});
-
-onUnmounted(async () => {
-  stopSound("waiting");
-  // Chiudi la connessione WebSocket quando il componente viene smontato
-  if (!isGameStarted.value) {
-    await leaveRoom();
-  }
-
-  if (players.value.length === 0 && !isGameStarted.value) {
-    await deleteRoom();
-  }
-
-  if (isPlayerHost() && !isGameStarted.value) {
-    socket.value.emit("hostLeft", code.value);
+const handleClickStart = () => {
+  if (canStart.value) {
+    canStart.value = false;
+    startGame();
   } else {
-    socket.value.emit("leaveRoom", code.value, players.value[0].name);
+    notification.send("This game is starting soon, please wait", "danger");
   }
-});
+};
+
+  onMounted(async () => {
+    if (!(await isUserInRoom())) {
+      return router.push("/");
+    }
+
+    if (cookies === "true") {
+      playSound("waiting", true);
+    }
+
+    await getRoom();
+    await getPlayers();
+    await updatePlayerNames();
+    await isPlayerHost();
+    socket.value = io(`http://${window.location.hostname}:8000`);
+
+    socket.value.emit("joinRoom", code.value, players.value[0].name);
+    socket.value.on("playerJoined", async (player) => {
+      await getPlayers();
+      await updatePlayerNames();
+    });
+
+    socket.value.on("playerLeft", async (player) => {
+      await getPlayers();
+      await updatePlayerNames();
+    });
+
+    socket.value.on("hostDelete", async () => {
+      router.push("/");
+    });
+
+    socket.value.on("gameStarted", async () => {
+      countdown.value = 3;
+      if (cookies === "true") {
+        stopSound("waiting");
+        playSound("countdown");
+      }
+      const interval = setInterval(() => {
+        countdown.value--;
+        if (countdown.value === 0) {
+          clearInterval(interval);
+          isGameStarted.value = true;
+          router.push("/game/" + code.value);
+        }
+      }, 1000);
+    });
+  });
+
+  onUnmounted(async () => {
+    stopAllSounds();
+    // Chiudi la connessione WebSocket quando il componente viene smontato
+    if (!isGameStarted.value) {
+      await leaveRoom();
+    }
+
+    if (players.value.length === 0 && !isGameStarted.value) {
+      await deleteRoom();
+    }
+
+    if (isPlayerHost() && !isGameStarted.value) {
+      socket.value.emit("hostLeft", code.value);
+    } else {
+      socket.value.emit("leaveRoom", code.value, players.value[0].name);
+    }
+  });
 </script>
 
 <template>
@@ -352,37 +363,25 @@ onUnmounted(async () => {
       <section v-if="players.filter((p) => p?.team === 1).length > 0">
         <h2>Squadra 1</h2>
         <section class="team-container">
-          <TEAMBOX
-            v-for="(player, index) in players.filter((p) => p?.team === 1)"
-            :key="index"
-            color="success"
-            :avatar="player.avatar"
-            :host="player.host"
-            >{{ player?.name }}</TEAMBOX>
+          <TEAMBOX v-for="(player, index) in players.filter((p) => p?.team === 1)" :key="index" color="success"
+            :avatar="player.avatar" :host="player.host">{{ player?.name }}</TEAMBOX>
         </section>
       </section>
       <section v-if="players.filter((p) => p?.team === 2).length > 0">
         <h2>Squadra 2</h2>
         <section class="team-container">
-          <TEAMBOX
-            v-for="(player, index) in players.filter((p) => p?.team === 2)"
-            :key="index"
-            color="success"
-            :avatar="player.avatar"
-            :host="player.host"
-            >{{ player?.name }}</TEAMBOX>
+          <TEAMBOX v-for="(player, index) in players.filter((p) => p?.team === 2)" :key="index" color="success"
+            :avatar="player.avatar" :host="player.host">{{ player?.name }}</TEAMBOX>
         </section>
       </section>
     </section>
   </section>
   <footer>
-    <BUTTON v-if="isHost" @click="startGame" :color="getButtonColor()"
-      >START GAME</BUTTON
-    >
+    <BUTTON v-if="isHost" @click="handleClickStart" :color="getButtonColor()">START GAME</BUTTON>
   </footer>
   <div v-if="countdown >= 0" class="countdown-overlay">
     <div class="countdown-text">
-      {{ countdown > 0 ? countdown : "Good Luck" }}
+      {{ countdown }}
     </div>
   </div>
 </template>

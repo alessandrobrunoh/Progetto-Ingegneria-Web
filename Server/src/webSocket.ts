@@ -31,9 +31,9 @@ export const initializeWebSocket = (server) => {
       socket.to(room).emit("gameStarted");
     });
 
-    socket.on("joinGame", (game, player) => {
+    socket.on("joinGame", (game) => {
       socket.join(game);
-      console.log(`Player ${player} joined game ${game}`);
+      console.log(`Player joined game ${game}`);
     });
 
     socket.on("passTurn", (game, player) => {
@@ -44,6 +44,16 @@ export const initializeWebSocket = (server) => {
     socket.on("playCard", (game, player) => {
       socket.to(game).emit("cardPlayed", player);
       console.log(`Player ${player} played card in game ${game}`);
+    });
+
+    socket.on("leaveGame", (game) => {
+      console.log(`Player left game ${game}`);
+      socket.to(game).emit("playerLeftGame");
+      socket.leave(game);
+    });
+
+    socket.on("lastRound", (game) => {
+      socket.to(game).emit("lastRoundStarted");
     });
     
     socket.on("endGame", (game) => {

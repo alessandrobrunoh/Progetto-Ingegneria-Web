@@ -16,7 +16,7 @@ export const isPlayerInGame = async (req: Request, res: Response) => {
 
   try {
     const connection = await connect();
-    const sql = "SELECT room_code FROM players WHERE user_id = ? AND in_game = 1";
+    const sql = "SELECT room_code FROM players WHERE user_id = ? AND in_game = 1 AND gave_up = 0";
     const [rows]: any = await connection.execute(sql, [user_id]);
 
     return res.json(rows);

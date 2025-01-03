@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { notification } from "@/assets/js/notificationEvent.js";
@@ -20,13 +20,11 @@ const player_id = ref(null);
 const player_hand = ref([]);
 const table_cards = ref([]);
 const card_disabled = ref(true);
-const Loaded = ref({
-  getRoom: false,
-  getGameTable: false,
-  getPlayerHand: false,
-});
+const isLastRound = ref(false);
 const cardTheme = ref(null);
 const token = getToken();
+const code = ref(route.params.code);
+const gave_up = ref(false);
 const cookies = Cookies.get("music");
 if (!cookies) {
   Cookies.set("music", true);
@@ -68,7 +66,7 @@ const getPlayers = async () => {
         'authorization': `Bearer ${token}`
       }
     });
-    return response.data;
+    return response.data.filter(player => player.gave_up === 0);
   } catch (error) {
     console.error('Error fetching players:', error);
   }
@@ -113,7 +111,6 @@ const getGameTable = async () => {
       }
     });
     table_cards.value = response.data;
-    Loaded.getGameTable = true;
     return response.data;
   } catch (error) {
     console.error('Error fetching game table:', error);
@@ -140,6 +137,10 @@ const getTurnWinner = async () => {
         'authorization': `Bearer ${token}`
       }
     });
+    if (response.data.message === "Deck is empty") {
+      socket.value.emit('lastRound', route.params.code);
+      handleLastRound();
+    }
     return response.data;
   } catch (error) {
     console.error('Error fetching winner:', error);
@@ -159,36 +160,63 @@ const endGame = async () => {
   }
 };
 
+const isGameEnded = async () => {
+  await endGame();
+  router.push(`/leaderboard/${route.params.code}`);
+  socket.value.emit('endGame', route.params.code);
+};
+
 const updateGameTable = async (card) => {
   table_cards.value.push(card);
   player_hand.value = await getPlayerHand();
   card_disabled.value = true;
   socket.value.emit('playCard', route.params.code, player_id.value);
-
   if (table_cards.value.length >= players.value.length) {
-    await getTurnWinner();
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (player_hand.value.length === 0) {
-      console.log("Game Ended");
-      await endGame();
-      router.push(`/leaderboard/${route.params.code}`);
-      socket.value.emit('endGame', route.params.code);
+      await isGameEnded();
     }
+    await getTurnWinner();
   }
   await updateTurnInfo();
 };
 
 const updateTurnInfo = async () => {
   players.value = await getPlayers();
+  if (players.value.length <= 1) {
+    await endGame();
+    router.push(`/leaderboard/${route.params.code}`);
+    socket.value.emit('endGame', route.params.code);
+  }
   turn_player_id.value = await getRoom();
   turn_player_id.value = turn_player_id.value.turn_player_id;
-  player_hand.value = await getPlayerHand();
-  table_cards.value = await getGameTable();
+  checkPlayerPoints();
   if (player_id.value == turn_player_id.value) {
     card_disabled.value = false;
     turn_player_name.value = "Your";
   } else {
     turn_player_name.value = await getUserName(turn_player_id.value) + "'s";
   }
+  player_hand.value = await getPlayerHand();
+  table_cards.value = await getGameTable();
+};
+
+const checkPlayerPoints = () => {
+  players.value.forEach(player => {
+    if (player.user_id === player_id.value && player.points > 0) {
+      return playerPoints.value = true;
+    }
+  });
+};
+
+const handleLastRound = () => {
+  isLastRound.value = true;
+  if (cookies) {
+    playSound("last_round");
+  }
+  setTimeout(() => {
+    isLastRound.value = false;
+  }, 1500);
 };
 
 onMounted(async () => {
@@ -218,16 +246,29 @@ onMounted(async () => {
       stopAllSounds();
       playSound("your_turn");
     }
-    await updateTurnInfo();
     socket.value.emit('passTurn', route.params.code, player_id);
+    await updateTurnInfo();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await updateTurnInfo();
   });
 
   socket.value.on('gameEnded', async () => {
     router.push(`/leaderboard/${route.params.code}`);
   });
+
+  socket.value.on('playerLeftGame', async () => {
+    players.value = await getPlayers();
+    console.log('Player left the game');
+    await isGameEnded();
+  });
+
+  socket.value.on('lastRoundStarted', () => {
+    handleLastRound();
+  });
 });
 
-onUnmounted(async () => {
+onBeforeUnmount(async () => {
+  socket.value.emit('leaveGame', code.value);
   socket.value.disconnect();
 });
 </script>
@@ -248,6 +289,9 @@ onUnmounted(async () => {
       </section>
     </footer>
   </section>
+  <div v-if="isLastRound" class="last-round-overlay">
+    <h2>Last Round</h2>
+  </div>
 </template>
 
 <style scoped lang="scss">
@@ -266,7 +310,7 @@ img {
 
 header {
   background-color: var(--secondary-color);
-  z-index: 2;
+  box-shadow: var(--box-shadow);
 }
 
 h2 {
@@ -305,6 +349,40 @@ h2 {
   justify-content: center;
   gap: 50px;
   padding: 4vh 0;
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+
+.last-round-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 2rem;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: zoomIn 0.5s forwards, zoomOut 0.5s 1.5s forwards; /* Adjust timing as needed */
 }
 
 footer {

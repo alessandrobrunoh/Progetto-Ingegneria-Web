@@ -83,7 +83,7 @@ onBeforeMount(async () => {
 
     setInterval(async () => {
         await refreshRooms();
-    }, 10000);
+    }, 20000);
 });
 </script>
 
@@ -107,7 +107,7 @@ onBeforeMount(async () => {
     flex-direction: column;
     padding: 5vh 5vw;
     gap: 20px;
-    width: 50%;
+    width: 80vw;
 }
 
 ul {
@@ -123,15 +123,10 @@ ul {
     align-items: center;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
 .refresh-button {
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
+    width: 50%;
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { notification } from "@/assets/js/notificationEvent.js";
@@ -31,12 +31,18 @@ const props = defineProps({
   }
 });
 
+const isPlaying = ref(false);
+
 const handleClick = async () => {
-  if (props.disabled) {
+  if (isPlaying.value) {
     return;
   }
+  isPlaying.value = true;
   await playCard();
   await passTurn();
+  setTimeout(() => {
+    isPlaying.value = false;
+  }, 1000);
 };
 
 const playCard = async () => {
@@ -60,7 +66,6 @@ const passTurn = async () => {
         'authorization': `Bearer ${token}`
       }
     });
-    emits('passTurn', response.data); // Emetti l'evento con i dati del turno passato
     return response.data;
   } catch (error) {
     console.error('Error passing turn:', error);
@@ -69,8 +74,8 @@ const passTurn = async () => {
 </script>
 
 <template>
-  <section class="card-container" @click="handleClick" :class="{ disabled: props.disabled }">
-    <img :src="`/assets/img/cards/${props.cardTheme}/${props.number}_${props.seed}.svg`" alt="Card" />
+  <section class="card-container" @click="handleClick" :class="{ disabled: props.disabled || isPlaying }">
+    <img :src="`/assets/img/cards/${props.cardTheme}/${props.number}_${props.seed}.png`" alt="Card" />
   </section>
 </template>
 

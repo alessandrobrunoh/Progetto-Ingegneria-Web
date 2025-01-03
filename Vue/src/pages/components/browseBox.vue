@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import { defineProps } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -12,9 +12,12 @@ const props = defineProps({
     },
 });
 
+const players = ref([]);
 const token = getToken();
 const router = useRouter();
 const tooltipVisible = ref(false);
+const player_name = ref('');
+const player_elo = ref(0);
 
 const joinRoom = async (code) => {
     try {
@@ -28,17 +31,53 @@ const joinRoom = async (code) => {
         console.error('Error joining room:', error);
     }
 };
+
+const getRoomPlayers = async (code) => {
+    try {
+        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code}/players`, {
+            headers: {
+                'authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching room code:', error);
+    }
+};
+
+const getUser = async (player_id) => {
+    try {
+        const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id}`, {
+            headers: {
+                'authorization' : `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching user:', error);
+    }
+};
+
+onBeforeMount(async () => {
+    players.value = await getRoomPlayers(props.code);
+    const player = await getUser(players.value[0].user_id);
+    player_name.value = player.username.charAt(0).toUpperCase() + player.username.slice(1);
+    player_elo.value = player.elo;
+});
 </script>
 
 <template>
-    <section class="browse-box" @click="joinRoom(code)" @mouseover="tooltipVisible = true"
+    <fieldset class="browse-box" @click="joinRoom(code)" @mouseover="tooltipVisible = true"
         @mouseleave="tooltipVisible = false">
-        <h3>Code: {{ code }}</h3>
-        <span class="tooltip" v-if="tooltipVisible">Click to Join Room</span>
-    </section>
+            <legend>{{ code }}</legend>
+            <h1>Vs</h1>
+            <p>{{ player_name }} (Elo: {{ player_elo }})</p>
+            <span class="tooltip" v-if="tooltipVisible">Click to Join Room</span>
+    </fieldset>
 </template>
 
 <style scoped>
+
 .browse-box {
     padding: 2vh 5vw;
     background-color: var(--link-color);
@@ -48,6 +87,20 @@ const joinRoom = async (code) => {
     gap: 10px;
     align-items: center;
     color: var(--secondary-color);
+    box-shadow: var(--box-shadow);
+    border: 2px solid transparent;
+}
+
+legend {
+    top: 10px;
+    padding: 5px 25px;
+    background-color: var(--gold-color);
+    border-radius: 10px;
+    position: relative;
+    font-size: 1.3rem;
+    border: 3px solid var(--secondary-color);
+    text-align: center;
+ 
 }
 
 .browse-box:hover {

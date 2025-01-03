@@ -34,14 +34,13 @@ const handleSignUp = async () => {
       playSound("wrong");
     }
     notification.send('Registration failed', 'danger');
-
   }
 };
 </script>
 
 <template>
   <section class="signup-container">
-    <img src="https://x.boardgamearena.net/data/gamemedia/briscola/box/en_280.png?h=1693578389" alt="Vue logo" />
+    <img src="https://i.imgur.com/v9LaPxu.png" alt="Briscola logo" />
     <div>
       <INPUT v-model="username" placeholder="Username" type="username" />
       <INPUT v-model="email" placeholder="Email" type="email" />

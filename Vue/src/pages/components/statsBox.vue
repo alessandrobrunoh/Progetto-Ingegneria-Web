@@ -19,7 +19,7 @@ export default {
 
 <template>
 <section class="statsbox-container">
-  <h3><slot></slot></h3>
+  <h4><slot></slot></h4>
   <div class="box">
     <div class="icon">
       <i :class="`fe-${type}`"></i>
@@ -39,20 +39,21 @@ export default {
 
 .icon,
 span {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   border: 4px solid var(--primary-color);
   border-radius: 15px 0 0 15px;
 }
 .icon {
-  padding: 10px;
+  padding: 8px;
   background-color: var(--primary-color);
 }
 i {
   color: var(--secondary-color);
 }
 span {
-  padding: 10px;
+  padding: 8px;
   background-color: var(--white-color);
+  color: var(--primary-color);
   border-radius: 0 15px 15px 0;
   width: 20vw;
 }

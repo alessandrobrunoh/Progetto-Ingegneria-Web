@@ -520,7 +520,7 @@ export const startGame = async (req: Request, res: Response) => {
     for (let i = 0; i < players.length; i++) {
       for (let j = 0; j < 3; j++) {
         drawCard(code, players[i].user_id);
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
 
@@ -565,17 +565,56 @@ export const endGame = async (req: Request, res: Response) => {
       [code]
     );
 
+    await connection.execute(
+    "DELETE FROM deck WHERE room_code = ?",
+    [code]
+      );
+
+      await connection.execute(
+    "DELETE FROM hand_cards WHERE room_code = ?",
+    [code]
+      );
+
+      await connection.execute(
+    "DELETE FROM table_cards WHERE room_code = ?",
+    [code]
+      );
+
     // Retrieve players in the room
     const [players]: any = await connection.execute(
-      'SELECT user_id, points FROM players WHERE room_code = ?',
+      `SELECT p.user_id, p.points, u.elo 
+       FROM players p 
+       JOIN users u ON p.user_id = u.id 
+       WHERE p.room_code = ?`,
       [code]
     );
+
+    if (players.length === 0) {
+      return res.status(404).send("Room not found");
+    }
 
     // Determine the winner
     const winner = players.reduce((prev, current) => (prev.points > current.points) ? prev : current);
 
-    // Update each player's total games and best score
+    // Calculate Elo changes
+    const kFactor = 32; // K-factor for Elo rating system
     for (const player of players) {
+      const expectedScore = 1 / (1 + Math.pow(10, (winner.elo - player.elo) / 400));
+      const actualScore = player.user_id === winner.user_id ? 1 : 0;
+      const newElo = player.elo + kFactor * (actualScore - expectedScore);
+
+      // Update Elo in the database
+      await connection.execute(
+        'UPDATE users SET elo = ? WHERE id = ?',
+        [newElo, player.user_id]
+      );
+
+      await connection.execute( 
+        'UPDATE players SET elo = ? WHERE user_id = ?',
+        [newElo, player.user_id]
+      );
+
+      // Update total games and best score
       await connection.execute(
         'UPDATE users SET total_games = total_games + 1 WHERE id = ?',
         [player.user_id]
@@ -639,6 +678,21 @@ export const playCard = async (req: Request, res: Response) => {
   const { code, number, seed } = req.params;
   try {
     const connection = await connect();
+
+    // Controlla se è il turno del giocatore
+    const [turnPlayerResult]: any = await connection.execute(
+      "SELECT turn_player_id FROM rooms WHERE code = ?",
+      [code]
+    );
+    if (turnPlayerResult.length === 0) {
+      return res.status(404).send("Room not found");
+    }
+
+    const turn_player_id = turnPlayerResult[0].turn_player_id;
+    if (turn_player_id !== player_id) {
+      return res.status(403).send("It's not your turn");
+    }
+
     await connection.execute(
       "INSERT INTO table_cards (room_code, player_id, number, seed) VALUES (?, ?, ?, ?)",
       [code, player_id, number, seed]
@@ -671,7 +725,6 @@ export const playCard = async (req: Request, res: Response) => {
  * @returns Una risposta con un messaggio di conferma o un messaggio di errore in caso di fallimento.
  */
 export const passTurn = async (req: Request, res: Response) => {
-  let winnerPlayer = "";
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     debugPrint("Authorization token is missing");
@@ -705,11 +758,11 @@ export const passTurn = async (req: Request, res: Response) => {
       return res.status(404).send("Room not found");
     }
 
-    if (turnPlayerResult === player_id) {
+    const turn_player_id = turnPlayerResult[0].turn_player_id;
+    if (turn_player_id !== player_id) {
       return res.status(403).send("It's not your turn");
     }
 
-    const turn_player_id = turnPlayerResult[0].turn_player_id;
     let nextPlayer = rows[0].user_id;
 
     for (let i = 0; i < rows.length; i++) {
@@ -795,7 +848,7 @@ export const getTurnWinner = async (req: Request, res: Response) => {
     );
 
     const [deck]: any = await connection.execute(
-      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 1",
+      "SELECT * FROM deck WHERE room_code = ? ORDER BY id DESC LIMIT 3",
       [code]
     );
 
@@ -809,28 +862,11 @@ export const getTurnWinner = async (req: Request, res: Response) => {
       [code]
     );
 
-    let lastTurn: number | undefined;
-    let turn: number | undefined;
-
     if (deck.length === 0) {
-      if (typeof lastTurn === "undefined") {
-        lastTurn = 3 * players.length;
-        turn = 3 * players.length;
-        console.log("Last Turn:", lastTurn);
-      }
-    } else {
-      if (turn !== undefined) {
-        turn--;
-        console.log("Turn:", turn);
-      }
-    }
-
-    if (turn === 0) {
       await connection.execute(
         "UPDATE rooms SET status = 'ended' WHERE code = ?",
         [code]
       );
-      console.log("Partita finita");
       return res.json("Game Ended");
     }
 
@@ -877,6 +913,9 @@ export const getTurnWinner = async (req: Request, res: Response) => {
         "UPDATE rooms SET turn_player_id = ? WHERE code = ?",
         [turnWinner.player, code]
       );
+      if (deck.length === 2) {
+        return res.status(200).json({ turnWinner, message: "Deck is empty" });
+      }
       return res.json(turnWinner);
     }
   } catch (error) {
@@ -922,13 +961,14 @@ export const giveUp = async (req: Request, res: Response) => {
     );
 
     await connection.execute(
-      "DELETE FROM players WHERE room_code = ? AND user_id = ?",
+      "UPDATE players SET gave_up = 1 WHERE room_code = ? AND user_id = ?",
       [code, player_id]
     );
 
     debugPrint(
       `Player with ID: ${player_id} gave up in room with CODE: ${code}`
     );
+    console.log("Player gave up");
     res.json(player_id);
   } catch (error) {
     debugPrint(

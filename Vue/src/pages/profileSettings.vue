@@ -21,7 +21,7 @@ const imageLoaded = ref(false);
 const checkboxLoaded = ref(false);
 
 const close = () => {
-    router.push("/");
+    router.push("/profile");
 };
 
 const cookies = Cookies.get('music') === "true";
@@ -153,10 +153,12 @@ onMounted(async () => {
                 <option value="Old Style">Old Style</option>
                 <option value="Light">Light</option>
                 <option value="Dark">Dark</option>
+                <option value="Rusty">Rusty</option>
                 <option value="Barbie">Barbie</option>
                 <option value="Aloe">Aloe</option>
                 <option value="Cartoon">Cartoon</option>
                 <option value="Autumn">Autumn</option>
+                <option value="ColorBlind">ColorBlind</option>
             </select>
         </div>
         <div class="input-group">
@@ -190,6 +192,8 @@ select {
     width: 60vw;
     background-color: var(--white-color);
     box-shadow: 0 4px 4px rgb(0 0 0 / 25%);
+    color: var(--primary-color);
+    font-size: 0.9rem;
 }
 
 i:hover {
@@ -217,10 +221,11 @@ i:hover {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-height: calc(100vh - 40vh);
+    max-height: calc(100vh - 45vh);
     /* Altezza massima per rendere scrollabile */
     overflow-y: auto;
     /* Abilita lo scroll verticale */
     padding: 15px;
+    color: var(--primary-color);
 }
 </style>

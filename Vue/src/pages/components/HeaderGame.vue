@@ -8,11 +8,11 @@ import axios from 'axios';
 const route = useRoute();
 const router = useRouter();
 const token = getToken();
+const code = ref(route.params.code);
 
 const briscola = ref([]);
 const cardTheme = ref('Old Style');
 const avatar = ref(1);
-
 
 const getUserID = async () => {
     try {
@@ -68,12 +68,12 @@ const getAvatar = async () => {
 
 const giveUp = async () => {
     try {
-        await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/give_up`, {
+        await axios.post(`http://${window.location.hostname}:8000/api/room/${route.params.code}/player/give_up`, {}, {
             headers: {
                 'authorization': `Bearer ${token}`
             }
         });
-        return response.data;
+        router.push(`/leaderboard/${route.params.code}`);
     } catch (error) {
         console.error('Error fetching give up:', error);
     }
@@ -83,14 +83,13 @@ onBeforeMount(async () => {
     cardTheme.value = await getCardTheme();
     briscola.value = await getBriscola();
     avatar.value = await getAvatar();
-    console.log(briscola.value);
 });
 
 </script>
 
 <template>
     <section class="header-game-container">
-        <img class="briscola" :src="`../assets/img/cards/${cardTheme}/${briscola.number}_${briscola.seed}.svg`"
+        <img class="briscola" :src="`../assets/img/cards/${cardTheme}/${briscola.number}_${briscola.seed}.png`"
             :alt="`Briscola ${briscola.number} ${briscola.seed}`" />
         <BUTTON @click="giveUp" color="danger">GIVE UP</BUTTON>
         <img alt="Avatar Profile" :src="`../assets/img/avatars/${avatar}.svg`" />

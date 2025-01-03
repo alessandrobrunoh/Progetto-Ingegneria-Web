@@ -15,8 +15,10 @@ const game_win = ref(0);
 const game_lost = ref(0);
 const best_points = ref(0);
 const apiLoaded = ref(false);
-const showGameHistory = ref(true);
+const showGameHistory = ref(false);
+const elo = ref(0);
 const rooms = ref([]);
+const historyRooms = ref([]);
 const token = getToken();
 
 const logout = () => {
@@ -24,6 +26,19 @@ const logout = () => {
   localStorage.removeItem('token');
   router.push('/');
 }
+
+const getUser = async (player_id) => {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id}`, {
+      headers: {
+        'authorization': `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+  }
+};
 
 const getUserID = async () => {
   try {
@@ -34,84 +49,118 @@ const getUserID = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching user ID:", error);
+    console.error('Error fetching user ID:', error);
   }
-}
-
-const getUser = async () => {
-  try {
-    const response = await axios.get(`http://${window.location.hostname}:8000/api/user/${player_id.value}`, {
-      headers: {
-        'authorization': `Bearer ${token}`,
-      },
-    });
-    avatar.value = response.data.avatar;
-    game_win.value = response.data.wins;
-    game_lost.value = response.data.total_games - response.data.wins;
-    best_points.value = response.data.best_points;
-    apiLoaded.value = true;
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-  }
-}
-
-const getRooms = async () => {
-    try {
-        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
-            headers: {
-                'authorization': `Bearer ${token}`
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching rooms:', error);
-        notification.send("Error fetching rooms", "danger");
-        return [];
-    }
 };
 
-// Funzione per ottenere tutte le stanze e i giocatori
-const getRoomsPlayers = async (code) => {
-    try {
-        const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code}/players`, {
-            headers: {
-                'authorization': `Bearer ${token}`
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching rooms:', error);
-        return [];
+const getRooms = async () => {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/browse`, {
+      headers: {
+        'authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    notification.send("Error fetching rooms", "danger");
+    return [];
+  }
+};
+
+const getRoomPlayers = async (code) => {
+  try {
+    const response = await axios.get(`http://${window.location.hostname}:8000/api/room/${code}/players`, {
+      headers: {
+        'authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching rooms:', error);
+    return [];
+  }
+};
+
+const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const getGameHistory = async () => {
+  for (let room of rooms.value) {
+    const players = await getRoomPlayers(room.code);
+    for (let player of players) {
+      if (player.user_id === player_id.value && room.status === 'ended') {
+        const opponent = players.find(p => p.user_id !== player_id.value);
+        const playerName = await getUser(player_id.value);
+        if (opponent) {
+          const opponentName = await getUser(opponent.user_id);
+          historyRooms.value.push({
+            code: room.code,
+            playerName: capitalizeFirstLetter(playerName.username),
+            playerPoints: player.points || 0,
+            playerElo: player.elo || 0,
+            opponentPoints: opponent.points || 0,
+            opponentName: capitalizeFirstLetter(opponentName.username),
+            opponentElo: opponent.elo || 0,
+          });
+        }
+      }
     }
+  }
 };
 
 const toggleSection = () => {
   showGameHistory.value = !showGameHistory.value;
 };
 
+const getBoxClass = (playerPoints, opponentPoints) => {
+  return playerPoints > opponentPoints ? 'box-green' : 'box-red';
+};
+
+const goToLeaderboard = (code) => {
+  router.push(`/leaderboard/${code}`);
+};
+
 onBeforeMount(async () => {
   player_id.value = await getUserID();
-  await getUser();
+  const user = await getUser(player_id.value);
+  game_win.value = user.wins;
+  game_lost.value = user.total_games - user.wins;
+  best_points.value = user.best_points;
+  elo.value = user.elo;
+  avatar.value = user.avatar;
   rooms.value = await getRooms();
-  console.log(rooms); 
+  await getGameHistory();
 });
 </script>
 
 <template>
-  <section v-if="apiLoaded" class="profile-container">
-    <!-- <i class="fe-log-out logout-icon" @click="logout"></i> -->
+  <section class="profile-container">
     <img :src="`../assets/img/avatars/${avatar}.svg`" alt="Profile Avatar" />
-    <button @click="toggleSection" class="toggle-button">
-      Switch Section
-    </button>
-    <div class="content-container" >
-      <section v-if="showGameHistory" class="gamehistory-container">
-        <div class="game-box" v-for="room in rooms" action="leaderboard" code="">
-          <p>{{ room.code  }}</p>
+    <span @click="toggleSection" class="toggle-button"><i class="fe-change"></i> {{ showGameHistory ? 'Switch to Statistics' : 'Switch to GameHistory' }}</span>
+    <div class="content-container">
+      <section v-if="showGameHistory">
+        <div v-if="historyRooms.length === 0">
+          <p>No games played yet</p>
+        </div>
+        <div v-else class="gamehistory-container">
+          <div class="game-box" v-for="room in historyRooms" :key="room.code"
+            :class="getBoxClass(room.playerPoints, room.opponentPoints)" @click="goToLeaderboard(room.code)">
+            <div class="game-info">
+              <p>{{ room.playerName }} (Elo: {{ room.playerElo }})</p>
+              <div class="points-container">
+                <p>{{ room.playerPoints }}</p>
+                <h1>Vs</h1>
+                <p>{{ room.opponentPoints }}</p>
+              </div>
+              <p> {{ room.opponentName }} (Elo: {{ room.opponentElo }})</p>
+            </div>
+          </div>
         </div>
       </section>
       <section v-else class="statistics-container">
+        <STATSBOX class="item4" type="elo" :number="elo">Elo</STATSBOX>
         <STATSBOX class="item1" type="wins" :number="game_win">Games Won</STATSBOX>
         <STATSBOX class="item2" type="loses" :number="game_lost">Games Lost</STATSBOX>
         <STATSBOX class="item3" type="best" :number="best_points">Best Points</STATSBOX>
@@ -130,6 +179,10 @@ a {
   color: var(--secondary-color);
 }
 
+h1 {
+  font-size: 1.5rem;
+}
+
 .logout-icon {
   position: absolute;
   top: 10px;
@@ -141,34 +194,53 @@ a {
 
 .game-box {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 15px;
+  border-radius: 15px;
   color: var(--secondary-color);
+  cursor: pointer;
+}
+
+.game-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.game-box:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s;
+}
+
+.box-green {
+  background-color: var(--success-color);
+}
+
+.box-red {
   background-color: var(--danger-color);
-  border-radius: 10px;
-
-  .won {
-    background-color: var(--success-color);
-  }
-
-  .lost {
-    background-color: var(--danger-color);
-  }
-} 
+}
 
 img {
-  width: 8rem;
+  width: 6.6rem;
   height: auto;
+}
+
+.points-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-container {
   display: flex;
-  width: 80vw;
+  width: 90vw;
   flex-direction: column;
   align-items: center;
   height: 50vh;
-  gap: 5vh;
+  gap: 5px;
   justify-content: space-between;
   position: relative;
 }
@@ -180,7 +252,7 @@ img {
   color: white;
   border: none;
   border-radius: 5px;
-  margin-bottom: 20px;
+  font-size: 0.9rem;
 }
 
 .statistics-container {
@@ -188,6 +260,7 @@ img {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
   grid-template-areas:
+    "item4 item4"
     "item1 item2"
     "item3 item3";
   gap: 10px;
@@ -198,11 +271,11 @@ img {
 .gamehistory-container {
   overflow-y: scroll;
   height: 25vh;
+  width: 90vw;
   padding: 15px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 80vw;
+  gap: 20px;
 }
 
 .item1 {
@@ -215,5 +288,9 @@ img {
 
 .item3 {
   grid-area: item3;
+}
+
+.item4 {
+  grid-area: item4;
 }
 </style>

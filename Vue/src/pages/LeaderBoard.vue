@@ -97,10 +97,8 @@ const highestPoints = computed(() => {
     }
   }
   if(getCurrentUserPoints() === maxPoints) {
-    console.log("victory");
     playSound("victory");
   } else {
-    console.log("defeat");
     playSound("defeat");
   }
   return maxPoints;
