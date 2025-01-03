@@ -84,13 +84,17 @@ onBeforeMount(async () => {
 });
 
 router.beforeEach(async (to, from, next) => {
+  loadHeader.value = false;
+  loadHeaderGame.value = false;
   token.value = getToken();
-  if (to.path.includes('/game/')) {
-    loadHeader.value = false;
-    loadHeaderGame.value = true;
-  } else {
-    loadHeader.value = true;
-    loadHeaderGame.value = false;
+  if (token.value != undefined) {
+    if (to.path.includes('/game/')) {
+      loadHeader.value = false;
+      loadHeaderGame.value = true;
+    } else {
+      loadHeader.value = true;
+      loadHeaderGame.value = false;
+    }
   }
   theme.value = await getTheme();
   document.body.setAttribute('theme', theme.value);
