@@ -2,3 +2,4 @@
 Server/.env
 Server/node_modules
 Vue/node_modules 
+.gitignore
