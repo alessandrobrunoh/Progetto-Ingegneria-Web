@@ -60,14 +60,6 @@ app.use("/api/user", userRoutes);
 import playerRoutes from "./routes/playerRoutes";
 app.use("/api/player", playerRoutes);
 
-// ? connect to db and exec a query
-import { connect } from "./utils/database";
-app.get("/db", async (req: Request, res: Response) => {
-  const connection = await connect();
-  const [rows] = await connection.execute("SELECT * FROM users");
-  res.json(rows);
-});
-
 app.use((req: Request, res: Response) => {
   res.status(404).send("404 Page not found");
 });

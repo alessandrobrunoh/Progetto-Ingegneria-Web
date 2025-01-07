@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { connect } from "../utils/database";
 import { getUserIdFromToken } from "../utils/getIdByToken";
 
@@ -166,12 +166,17 @@ export const checkAuth = async (
 
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
       if (err) {
-        if (err.name === "TokenExpiredError") {
+        if (err instanceof TokenExpiredError) {
           console.error("Token has expired:", err);
           return logout(req, res); // Chiama la funzione di logout
-        } else {
+        } else if (token === "undefined") {
+          return res.status(401).send("Token is undefined");
+        } else if (err instanceof JsonWebTokenError) {
           console.error("Invalid token:", err);
           return res.status(403).send("Invalid token.");
+        } else {
+          console.error("Token verification error:", err);
+          return res.status(403).send("Token verification error.");
         }
       }
 

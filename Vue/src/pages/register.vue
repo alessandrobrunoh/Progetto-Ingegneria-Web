@@ -33,7 +33,7 @@ const handleSignUp = async () => {
     if (music) {
       playSound("wrong");
     }
-    notification.send('Registration failed', 'danger');
+    notification.send(error.response.data, 'danger');
   }
 };
 </script>

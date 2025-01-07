@@ -61,6 +61,11 @@ const isInGame = async () => {
         'authorization': `Bearer ${token.value}`
       }
     });
+    if(response.data === "Logged out successfully") {
+      localStorage.removeItem('token');
+      router.push('/');
+      return;
+    }
     return response.data;
   } catch (error) {
     console.error('Error fetching get isInGame:', error);
@@ -68,12 +73,12 @@ const isInGame = async () => {
 };
 
 onBeforeMount(async () => {
-  await isInGame();
-  theme.value = await getTheme();
   document.body.setAttribute('theme', theme.value);
   loadHeader.value = false;
   loadHeaderGame.value = false;
   if (token.value != undefined) {
+    await isInGame();
+    theme.value = await getTheme();
     if (isGameRoute()) {
       console.log('isGameRoute');
       loadHeaderGame.value = true;

@@ -873,6 +873,10 @@ export const getTurnWinner = async (req: Request, res: Response) => {
         table[0].player_id
       );
 
+      console.log("Briscola:", briscola[0].seed);
+      console.log("Table:", table);
+      console.log("Turn winner:", turnWinner);
+
       await connection.execute(
         "UPDATE players SET points = points + ? WHERE user_id = ? AND room_code = ?",
         [turnWinner.points, turnWinner.player, code]

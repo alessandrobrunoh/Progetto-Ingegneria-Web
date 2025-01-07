@@ -173,10 +173,10 @@ const updateGameTable = async (card) => {
   socket.value.emit('playCard', route.params.code, player_id.value);
   if (table_cards.value.length >= players.value.length) {
     await new Promise(resolve => setTimeout(resolve, 500));
+    await getTurnWinner();
     if (player_hand.value.length === 0) {
       await isGameEnded();
     }
-    await getTurnWinner();
   }
   await updateTurnInfo();
 };
